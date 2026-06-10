@@ -16,13 +16,12 @@ export default function KainoaChat() {
   const aiRef = useRef(null);
   const base = import.meta.env.BASE_URL;
 
-  // Load instant answers
   useEffect(() => {
     fetch(`${base}data/responses/index.json`)
-     .then(r => r.json())
-     .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
-     .then(a => setAnswers(a.flat()))
-     .catch(console.error);
+    .then(r => r.json())
+    .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
+    .then(a => setAnswers(a.flat()))
+    .catch(console.error);
   }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999, behavior: 'smooth' }); }, [messages]);
@@ -49,8 +48,8 @@ export default function KainoaChat() {
       const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`)}`;
       const html = await fetch(proxy).then(r => r.text());
       const results = [...html.matchAll(/<a class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g)]
-       .slice(0, 5)
-       .map(m => `• [${m[2].replace(/<[^>]+>/g, '').trim()}](${m[1]})`);
+      .slice(0, 5)
+      .map(m => `• [${m[2].replace(/<[^>]+>/g, '').trim()}](${m[1]})`);
       return results.length? results.join('\n') : null;
     } catch { return null; }
   };
@@ -91,15 +90,18 @@ export default function KainoaChat() {
   return (
     <div className="bg-transparent">
       {/* Controls */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        {/* AI Dropdown */}
-        <div className="relative" ref={aiRef}>
-          <button onClick={() => setAiOpen(o =>!o)} className={`${pillBase} ${model!== 'off'? pillOn : pillOff} w-[140px] justify-between`}>
+      <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center justify-center w-[28px] h-[28px] rounded-lg bg-gradient-to-br from-cyan-500 to-teal-600 shadow-sm shadow-cyan-900/30 shrink-0">
+          <span className="text-[14px] font-bold text-black leading-none">K</span>
+        </div>
+
+        <div className="relative shrink-0" ref={aiRef}>
+          <button onClick={() => setAiOpen(o =>!o)} className={`${pillBase} ${model!== 'off'? pillOn : pillOff} w-[120px] justify-between`}>
             <span className="truncate">{models.find(m => m.id === model)?.label}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-60"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           {aiOpen && (
-            <div className="absolute z-20 mt-1 w-[140px] rounded-lg border border-slate-700/60 bg-[#0f131c] shadow-xl overflow-hidden py-1">
+            <div className="absolute z-20 mt-1 w-[120px] rounded-lg border border-slate-700/60 bg-[#0f131c] shadow-xl overflow-hidden py-1">
               {models.map(m => (
                 <button key={m.id} onClick={() => { setModel(m.id); setAiOpen(false); }} className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#1a1f2e] ${model === m.id? 'text-cyan-300' : 'text-slate-300'}`}>{m.label}</button>
               ))}
@@ -107,19 +109,20 @@ export default function KainoaChat() {
           )}
         </div>
 
-        {/* Toggles */}
-        {[
-          {k:'kainoa', v:useKainoa, s:setUseKainoa, l:'Kainoa'},
-          {k:'forum', v:useForum, s:setUseForum, l:'Forum'},
-          {k:'web', v:useWeb, s:setUseWeb, l:'Web'},
-        ].map(p => (
-          <div key={p.k} onClick={() => p.s(!p.v)} className={`${pillBase} ${p.v? pillOn : pillOff}`}>
-            <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center ${p.v? 'bg-cyan-500 border-cyan-500' : 'border-slate-600'}`}>
-              {p.v && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}
-            </span>
-            <span>{p.l}</span>
-          </div>
-        ))}
+        <div className="flex items-center gap-2 shrink-0">
+          {[
+            {k:'kainoa', v:useKainoa, s:setUseKainoa, l:'Kainoa'},
+            {k:'forum', v:useForum, s:setUseForum, l:'Forum'},
+            {k:'web', v:useWeb, s:setUseWeb, l:'Web'},
+          ].map(p => (
+            <div key={p.k} onClick={() => p.s(!p.v)} className={`${pillBase} ${p.v? pillOn : pillOff}`}>
+              <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center ${p.v? 'bg-cyan-500 border-cyan-500' : 'border-slate-600'}`}>
+                {p.v && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}
+              </span>
+              <span>{p.l}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Messages */}
@@ -139,6 +142,8 @@ export default function KainoaChat() {
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about TEP..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-20 text-[14px] text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
         <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500">Send</button>
       </div>
+
+      <style>{`.scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}.scrollbar-hide::-webkit-scrollbar{display:none}`}</style>
     </div>
   );
 }
