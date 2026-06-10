@@ -2,73 +2,51 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function KainoaChat() {
   const [answers, setAnswers] = useState([]);
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: "Aloha! I'm Kainoa. Type 'citizenship' to test my instant answers!" }
-  ]);
+  const [messages, setMessages] = useState([{ role: 'bot', text: "Aloha! I'm Kainoa. Type 'citizenship' to test my instant answers!" }]);
   const [input, setInput] = useState('');
   const [model, setModel] = useState('off');
   const [useForum, setUseForum] = useState(true);
   const [useKainoa, setUseKainoa] = useState(true);
   const msgsRef = useRef(null);
   const base = import.meta.env.BASE_URL;
-  const aiEnabled = model !== 'off';
+  const aiEnabled = model!== 'off';
 
   useEffect(() => { fetch(`${base}responses.json`).then(r=>r.json()).then(setAnswers).catch(()=>{}); }, [base]);
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999 }); }, [messages]);
 
   const find = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
-  const send = () => { 
-    const q=input.trim(); if(!q) return; 
-    setInput(''); 
-    setMessages(m=>[...m,{role:'user',text:q}]); 
-    const hit=useKainoa&&find(q); 
-    setTimeout(()=>setMessages(m=>[...m,{role:'bot',text:hit?hit.answer:"Try 'citizenship'"}]),100); 
-  };
+  const send = () => { const q=input.trim(); if(!q) return; setInput(''); setMessages(m=>[...m,{role:'user',text:q}]); const hit=useKainoa&&find(q); setTimeout(()=>setMessages(m=>[...m,{role:'bot',text:hit?hit.answer:"Try 'citizenship'"}]),100); };
 
-  const pill = "h-9 px-3 flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/70 text-sm hover:bg-slate-800/60 transition-colors";
+  const pill = "h-9 px-3 flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/70 text-sm hover:bg-slate-800/60";
 
   const Pill = ({checked, onChange, children}) => (
     <label className={`${pill} w-full md:w-auto cursor-pointer`}>
-      <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-cyan-500" />
-      <span className="whitespace-nowrap leading-none">{children}</span>
+      <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 rounded bg-slate-800 accent-cyan-500" />
+      <span>{children}</span>
     </label>
   );
 
-  const modelLabels = {
-    off: 'Off',
-    'phi-3.5-mini': 'Phi-3.5 Mini',
-    'phi-3-medium': 'Phi-3 Medium',
-    'llama-3.2-3b': 'Llama 3.2 3B'
-  };
+  const labels = { off:'Off', 'phi-3.5-mini':'Phi-3.5 Mini', 'phi-3-medium':'Phi-3 Medium', 'llama-3.2-3b':'Llama 3.2 3B' };
 
   return (
     <div className="bg-transparent">
       <div className="mb-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          
-          {/* FIXED AI PILL - no native select text */}
-          <div className={`${pill} w-full md:w-[175px] relative !gap-1.5 !pr-7 ${aiEnabled ? 'border-cyan-700/60' : ''}`}>
-            <span className={`text-[11px] leading-none shrink-0 ${aiEnabled ? 'text-cyan-400' : 'text-slate-500'}`}>AI:</span>
-            
-            {/* Visible text - perfectly centered */}
-            <span className="flex-1 truncate leading-none text-slate-200">
-              {modelLabels[model]}
-            </span>
+        <div className="flex flex-col gap-2 md:flex-row">
 
-            {/* Invisible real select - handles the tap */}
-            <select
-              value={model}
-              onChange={e=>setModel(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            >
+          {/* AI PILL - SINGLE TEXT, NO BASELINE ISSUE */}
+          <div className={`${pill} w-full md:w-[175px] relative justify-between!pr-7 ${aiEnabled? 'border-cyan-700/50 text-cyan-300' : 'text-slate-300'}`}>
+            <span className="truncate">AI: {labels[model]}</span>
+
+            <select value={model} onChange={e=>setModel(e.target.value)}
+              className="absolute inset-0 opacity-0 cursor-pointer">
               <option value="off">Off</option>
               <option value="phi-3.5-mini">Phi-3.5 Mini</option>
               <option value="phi-3-medium">Phi-3 Medium</option>
               <option value="llama-3.2-3b">Llama 3.2 3B</option>
             </select>
 
-            <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6 9l6 6 6-6" className="text-slate-500"/>
+            <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 9l6 6 6-6" />
             </svg>
           </div>
 
@@ -77,7 +55,6 @@ export default function KainoaChat() {
         </div>
       </div>
 
-      {/* Chat */}
       <div ref={msgsRef} className="mb-3 space-y-3">
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
@@ -88,10 +65,8 @@ export default function KainoaChat() {
 
       <div className="relative">
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
-          placeholder="Ask Kainoa about citizenship..."
-          className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 outline-none"
-        />
-        <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium">Send</button>
+          placeholder="Ask Kainoa about citizenship..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24" />
+        <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm">Send</button>
       </div>
     </div>
   );
