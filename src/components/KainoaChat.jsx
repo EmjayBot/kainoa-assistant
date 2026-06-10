@@ -25,7 +25,6 @@ export default function KainoaChat() {
     setTimeout(()=>setMessages(m=>[...m,{role:'bot',text:hit?hit.answer:"Try 'citizenship'"}]),100); 
   };
 
-  // ONE shared style for all pills
   const pill = "h-9 px-3 flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/70 text-sm hover:bg-slate-800/60 transition-colors";
 
   const Pill = ({checked, onChange, children}) => (
@@ -35,24 +34,39 @@ export default function KainoaChat() {
     </label>
   );
 
+  const modelLabels = {
+    off: 'Off',
+    'phi-3.5-mini': 'Phi-3.5 Mini',
+    'phi-3-medium': 'Phi-3 Medium',
+    'llama-3.2-3b': 'Llama 3.2 3B'
+  };
+
   return (
     <div className="bg-transparent">
       <div className="mb-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           
-          {/* AI pill - NOW uses same single wrapper */}
+          {/* FIXED AI PILL - no native select text */}
           <div className={`${pill} w-full md:w-[175px] relative !gap-1.5 !pr-7 ${aiEnabled ? 'border-cyan-700/60' : ''}`}>
             <span className={`text-[11px] leading-none shrink-0 ${aiEnabled ? 'text-cyan-400' : 'text-slate-500'}`}>AI:</span>
+            
+            {/* Visible text - perfectly centered */}
+            <span className="flex-1 truncate leading-none text-slate-200">
+              {modelLabels[model]}
+            </span>
+
+            {/* Invisible real select - handles the tap */}
             <select
               value={model}
               onChange={e=>setModel(e.target.value)}
-              className="w-full bg-transparent text-slate-200 outline-none appearance-none cursor-pointer leading-none"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             >
-              <option value="off" className="bg-slate-900">Off</option>
-              <option value="phi-3.5-mini" className="bg-slate-900">Phi-3.5 Mini</option>
-              <option value="phi-3-medium" className="bg-slate-900">Phi-3 Medium</option>
-              <option value="llama-3.2-3b" className="bg-slate-900">Llama 3.2 3B</option>
+              <option value="off">Off</option>
+              <option value="phi-3.5-mini">Phi-3.5 Mini</option>
+              <option value="phi-3-medium">Phi-3 Medium</option>
+              <option value="llama-3.2-3b">Llama 3.2 3B</option>
             </select>
+
             <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 9l6 6 6-6" className="text-slate-500"/>
             </svg>
