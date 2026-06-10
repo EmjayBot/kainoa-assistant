@@ -1,4 +1,8 @@
 ---
-// redirect root to /kainoa
-return Astro.redirect('/kainoa')
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import KainoaChat from '../components/KainoaChat.jsx';
 ---
+
+<StarlightPage frontmatter={{ title: 'Kainoa Assistant', description: 'TEP Kainoa' }}>
+  <KainoaChat client:load />
+</StarlightPage>
