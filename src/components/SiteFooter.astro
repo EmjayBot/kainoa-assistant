@@ -1,32 +1,88 @@
 ---
 const year = new Date().getFullYear();
 ---
-<footer class="border-t border-slate-800/60 bg-[#070b14]">
-  <div class="mx-auto w-full max-w-3xl px-4 py-10">
-    <h2 class="mb-3 text-lg font-semibold text-slate-100">How Kainoa works</h2>
-    <p class="text-[15px] leading-relaxed text-slate-400">
-      Kainoa has three brains: <strong class="text-slate-200">Kainoa</strong> answers instantly from your <code class="text-slate-300">responses.json</code>. <strong class="text-slate-200">Forum</strong> searches your local <code class="text-slate-300">forum-index.json</code>. <strong class="text-slate-200">AI</strong> runs Phi-3.5 in your browser — nothing leaves your device.
-    </p>
 
-    <h3 class="mb-2 mt-8 text-base font-semibold text-slate-100">Powered by</h3>
-    <ul class="space-y-1 text-[15px] text-slate-400">
-      <li>• WebLLM + MLC (local AI)</li>
-      <li>• forum.theeastpacific.com</li>
-      <li>• 100% client-side</li>
-    </ul>
+<footer class="border-t border-slate-800/60 bg-[#0b0f14]">
+  <div class="mx-auto max-w-6xl px-6 py-12">
+    <div class="grid gap-10 md:grid-cols-3 text- leading-relaxed">
 
-    <h3 class="mb-3 mt-8 text-base font-semibold text-slate-100">TEP Links</h3>
-    <div class="grid grid-cols-2 gap-3 text-[15px] text-slate-300">
-      <a href="https://forum.theeastpacific.com" class="hover:text-cyan-400">Forum</a>
-      <a href="https://www.nationstates.net/region=the_east_pacific" class="hover:text-cyan-400">Region</a>
-      <a href="#" class="hover:text-cyan-400">Discord</a>
-      <a href="#" class="hover:text-cyan-400">Wiki</a>
-      <a href="#" class="hover:text-cyan-400">Concordat</a>
-      <a href="https://forum.theeastpacific.com/t/citizenship-application" class="hover:text-cyan-400">Apply</a>
+      <!-- Column 1: How Kainoa Works -->
+      <div>
+        <h3 class="text- font-semibold text-slate-100 mb-3 tracking-wide">How Kainoa Works</h3>
+        <p class="text-slate-400 mb-3">
+          Kainoa is The East Pacific's citizenship assistant. It first checks your question
+          against a curated knowledge base of Concordat law, citizenship guides, and Magisterium procedures.
+        </p>
+        <p class="text-slate-400">
+          When you enable <span class="text-cyan-400">Forum</span> or <span class="text-cyan-400">Web</span> search,
+          Kainoa queries DuckDuckGo in real-time. No personal data is collected or stored.
+        </p>
+      </div>
+
+      <!-- Column 2: What Powers This Site -->
+      <div>
+        <h3 class="text- font-semibold text-slate-100 mb-3 tracking-wide">What Powers This Site</h3>
+        <ul class="space-y-2 text-slate-400">
+          <li class="flex gap-2"><span class="text-slate-600">•</span> <span><strong class="text-slate-300">Astro + React</strong> — fast, static site framework</span></li>
+          <li class="flex gap-2"><span class="text-slate-600">•</span> <span><strong class="text-slate-300">Tailwind CSS</strong> — utility-first styling</span></li>
+          <li class="flex gap-2"><span class="text-slate-600">•</span> <span><strong class="text-slate-300">GitHub Pages</strong> — free, open-source hosting</span></li>
+          <li class="flex gap-2"><span class="text-slate-600">•</span> <span><strong class="text-slate-300">DuckDuckGo</strong> — privacy-respecting search</span></li>
+          <li class="flex gap-2"><span class="text-slate-600">•</span> <span><strong class="text-slate-300">TEP Community</strong> — content and governance</span></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Community Links -->
+      <div>
+        <h3 class="text- font-semibold text-slate-100 mb-3 tracking-wide">The East Pacific</h3>
+        <ul class="space-y-2.5">
+          <li>
+            <a href="https://forum.theeastpacific.com" target="_blank" rel="noopener" class="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-60 group-hover:opacity-100"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Official Forum
+            </a>
+          </li>
+          <li>
+            <a href="https://www.nationstates.net/region=the_east_pacific" target="_blank" rel="noopener" class="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-60 group-hover:opacity-100"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              NationStates Region
+            </a>
+          </li>
+          <li>
+            <a href="https://discord.gg/theeastpacific" target="_blank" rel="noopener" class="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-60 group-hover:opacity-100"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              Discord
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/The-East-Pacific" target="_blank" rel="noopener" class="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-60 group-hover:opacity-100"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 0 0 0 5 4.77a5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              GitHub Organization
+            </a>
+          </li>
+          <li>
+            <a href="https://forum.theeastpacific.com/t/how-to-apply-for-citizenship" target="_blank" rel="noopener" class="group flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-60 group-hover:opacity-100"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Apply for Citizenship
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 
-  <div class="border-t border-slate-800/60 py-5 text-center text-xs text-slate-500">
-    Kainoa v1.1 • Built for The East Pacific • © {year}
+  <!-- Bottom bar -->
+  <div class="border-t border-slate-800/40">
+    <div class="mx-auto max-w-6xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text- text-slate-500">
+      <div class="flex items-center gap-3">
+        <span>© {year} The East Pacific</span>
+        <span class="hidden sm:inline text-slate-700">•</span>
+        <span>Kainoa is a community project, not affiliated with NationStates</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/ricky-who/kainoa" target="_blank" rel="noopener" class="hover:text-slate-300 transition">Source</a>
+        <a href="https://forum.theeastpacific.com/c/feedback" target="_blank" rel="noopener" class="hover:text-slate-300 transition">Feedback</a>
+        <span class="text-slate-600">v1.0</span>
+      </div>
+    </div>
   </div>
 </footer>
