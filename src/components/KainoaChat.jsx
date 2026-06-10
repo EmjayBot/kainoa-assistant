@@ -28,7 +28,7 @@ export default function KainoaChat() {
   return (
     <div className="bg-[#070b14]">
       <header className="sticky top-0 z-20 border-b border-slate-800/60 bg-[#070b14]/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+       <div className="mx-auto flex w-full max-w-[100vw] items-center gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-8 place-items-center rounded-xl bg-gradient-to-b from-cyan-400 to-blue-600 font-bold">K</div>
             <div className="leading-tight">
