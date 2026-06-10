@@ -1,25 +1,32 @@
 ---
-const year = new Date().getFullYear()
+const year = new Date().getFullYear();
 ---
+<footer class="border-t border-slate-800/60 bg-[#070b14]">
+  <div class="mx-auto w-full max-w-3xl px-4 py-10">
+    <h2 class="mb-3 text-lg font-semibold text-slate-100">How Kainoa works</h2>
+    <p class="text-[15px] leading-relaxed text-slate-400">
+      Kainoa has three brains: <strong class="text-slate-200">Kainoa</strong> answers instantly from your <code class="text-slate-300">responses.json</code>. <strong class="text-slate-200">Forum</strong> searches your local <code class="text-slate-300">forum-index.json</code>. <strong class="text-slate-200">AI</strong> runs Phi-3.5 in your browser — nothing leaves your device.
+    </p>
 
-<footer class="mt-16 border-t border-slate-800 bg-slate-950">
-  <div class="mx-auto w-full max-w-4xl px-4 py-8">
-    <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
-      <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-600 font-bold text-white">K</div>
-        <div>
-          <div class="text-sm font-semibold text-slate-200">Kainoa Assistant</div>
-          <div class="text-xs text-slate-500">The East Pacific</div>
-        </div>
-      </div>
-      <div class="flex gap-5 text-sm text-slate-400">
-        <a href="https://forum.theeastpacific.com/t/citizenship-application" class="hover:text-cyan-400">Apply</a>
-        <a href="https://forum.theeastpacific.com/t/citizenship-roster" class="hover:text-cyan-400">Roster</a>
-        <a href="https://github.com/EmjayBot/kainoa-assistant" class="hover:text-cyan-400">GitHub</a>
-      </div>
+    <h3 class="mb-2 mt-8 text-base font-semibold text-slate-100">Powered by</h3>
+    <ul class="space-y-1 text-[15px] text-slate-400">
+      <li>• WebLLM + MLC (local AI)</li>
+      <li>• forum.theeastpacific.com</li>
+      <li>• 100% client-side</li>
+    </ul>
+
+    <h3 class="mb-3 mt-8 text-base font-semibold text-slate-100">TEP Links</h3>
+    <div class="grid grid-cols-2 gap-3 text-[15px] text-slate-300">
+      <a href="https://forum.theeastpacific.com" class="hover:text-cyan-400">Forum</a>
+      <a href="https://www.nationstates.net/region=the_east_pacific" class="hover:text-cyan-400">Region</a>
+      <a href="#" class="hover:text-cyan-400">Discord</a>
+      <a href="#" class="hover:text-cyan-400">Wiki</a>
+      <a href="#" class="hover:text-cyan-400">Concordat</a>
+      <a href="https://forum.theeastpacific.com/t/citizenship-application" class="hover:text-cyan-400">Apply</a>
     </div>
-    <div class="mt-6 border-t border-slate-800 pt-4 text-center text-xs text-slate-500">
-      © {year} The East Pacific • Built with Astro
-    </div>
+  </div>
+
+  <div class="border-t border-slate-800/60 py-5 text-center text-xs text-slate-500">
+    Kainoa v1.1 • Built for The East Pacific • © {year}
   </div>
 </footer>
