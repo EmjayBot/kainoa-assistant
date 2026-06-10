@@ -13,31 +13,51 @@ export default function KainoaChat() {
   const [aiOpen, setAiOpen] = useState(false);
   const msgsRef = useRef(null);
   const aiRef = useRef(null);
-  const base = import.meta.env.BASE_URL;
 
-  // load split response files
+  // BULLETPROOF LOADER
   useEffect(() => {
     const loadResponses = async () => {
       try {
-        const manifest = await fetch(`${base}data/responses/index.json`).then(r => {
+        const manifest = await fetch('/data/responses/index.json').then(r => {
           if (!r.ok) throw new Error(`index.json ${r.status}`);
           return r.json();
         });
-        const files = await Promise.all(
-          manifest.map(file => fetch(`${base}data/responses/${file}`).then(r => {
-            if (!r.ok) throw new Error(`${file} ${r.status}`);
-            return r.json();
-          }))
+
+        const results = await Promise.all(
+          manifest.map(async (file) => {
+            try {
+              const res = await fetch(`/data/responses/${file}`);
+              if (!res.ok) {
+                console.warn(`[Kainoa] skipping ${file} (${res.status})`);
+                return [];
+              }
+              const data = await res.json();
+              console.log(`[Kainoa] loaded ${file} (${data.length} answers)`);
+              return data;
+            } catch (err) {
+              console.warn(`[Kainoa] error loading ${file}:`, err);
+              return [];
+            }
+          })
         );
-        const flat = files.flat();
+
+        const flat = results.flat();
         setAnswers(flat);
-        console.log(`[Kainoa] loaded ${flat.length} answers`);
+        console.log(`[Kainoa] total answers: ${flat.length}`);
+
+        if (flat.length === 0) {
+          setMessages(m => [...m, {
+            role: 'bot',
+            text: "Warning: No answers loaded. Check that index.json lists existing files."
+          }]);
+        }
       } catch (err) {
-        console.error('Failed to load TEP responses:', err);
+        console.error('[Kainoa] fatal:', err);
+        setMessages(m => [...m, { role: 'bot', text: `Load error: ${err.message}` }]);
       }
     };
     loadResponses();
-  }, [base]);
+  }, []);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999 }); }, [messages]);
   useEffect(() => {
@@ -46,7 +66,6 @@ export default function KainoaChat() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  // FIXED: case-insensitive both sides
   const findKainoa = q => {
     const ql = q.toLowerCase();
     return answers.find(a => a.keywords?.some(k => ql.includes(k.toLowerCase())));
