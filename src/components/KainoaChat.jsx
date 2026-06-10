@@ -7,68 +7,114 @@ export default function KainoaChat() {
   const [model, setModel] = useState('off');
   const [useForum, setUseForum] = useState(true);
   const [useKainoa, setUseKainoa] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
   const msgsRef = useRef(null);
+  const aiRef = useRef(null);
   const base = import.meta.env.BASE_URL;
 
   useEffect(() => { fetch(`${base}responses.json`).then(r=>r.json()).then(setAnswers).catch(()=>{}); }, [base]);
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999 }); }, [messages]);
 
-  const find = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
-  const send = () => { const q=input.trim(); if(!q) return; setInput(''); setMessages(m=>[...m,{role:'user',text:q}]); const hit=useKainoa&&find(q); setTimeout(()=>setMessages(m=>[...m,{role:'bot',text:hit?hit.answer:"Try 'citizenship'"}]),100); };
+  // close AI menu on outside click
+  useEffect(() => {
+    const onClick = (e) => { if (aiRef.current &&!aiRef.current.contains(e.target)) setAiOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
 
-  const pill = "h-7 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-700/40 bg-[#141722] text-[12px] text-slate-300";
+  const find = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
+  const send = () => {
+    const q = input.trim(); if (!q) return;
+    setInput('');
+    setMessages(m => [...m, { role: 'user', text: q }]);
+    const hit = useKainoa && find(q);
+    setTimeout(() => setMessages(m => [...m, { role: 'bot', text: hit? hit.answer : "Try 'citizenship'" }]), 100);
+  };
+
+  const models = [
+    { id: 'off', label: 'AI: Off' },
+    { id: 'phi-3.5-mini', label: 'AI: Phi-3.5' },
+    { id: 'phi-3-medium', label: 'AI: Phi-3 Med' },
+    { id: 'llama-3.2-3b', label: 'AI: Llama 3.2' },
+  ];
+  const currentLabel = models.find(m => m.id === model)?.label;
+
+  // ONE pill definition for all three controls
+  const pillBase = "h-7 px-2.5 inline-flex items-center gap-1.5 rounded-lg border text-[12px] leading-none select-none";
+  const pillIdle = "border-slate-700/40 bg-[#141722] text-slate-300 hover:bg-[#1a1f2e]";
+  const pillActive = "border-cyan-800/60 bg-[#141722] text-cyan-300";
+
+  const TogglePill = ({ active, onClick, children }) => (
+    <button type="button" onClick={onClick} className={`${pillBase} ${active? pillActive : pillIdle}`}>
+      <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
+        {active && (
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+            <path d="M5 13l4 4 10-10" />
+          </svg>
+        )}
+      </span>
+      <span>{children}</span>
+    </button>
+  );
 
   return (
-    <div className="bg-transparent">
+    <div className="bg-transparent" onClick={()=>setAiOpen(false)}>
       <div className="mb-4 flex flex-wrap items-center gap-2">
 
-        {/* AI - NUDGED UP 2px to match */}
-        <select
-          value={model}
-          onChange={e=>setModel(e.target.value)}
-          className={`${pill} appearance-none pr-6 cursor-pointer hover:bg-[#1a1f2e] focus:outline-none -translate-y-[1.5px]`}
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a6378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 6px center',
-            minWidth: '95px',
-            lineHeight: '1'
-          }}
-        >
-          <option value="off">AI: Off</option>
-          <option value="phi-3.5-mini">AI: Phi-3.5</option>
-          <option value="phi-3-medium">AI: Phi-3 Med</option>
-          <option value="llama-3.2-3b">AI: Llama 3.2</option>
-        </select>
+        {/* AI - CUSTOM BUTTON, NOT A <select> */}
+        <div className="relative" ref={aiRef} onClick={e=>e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setAiOpen(o =>!o)}
+            className={`${pillBase} ${model!== 'off'? pillActive : pillIdle} pr-6 min-w-[95px] justify-between`}
+          >
+            <span className="truncate">{currentLabel}</span>
+            <svg className="absolute right-2 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5a6378" strokeWidth="2">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
 
-        {/* Forum */}
-        <label className={`${pill} cursor-pointer hover:bg-[#1a1f2e] ${useForum? 'border-cyan-900/50' : ''}`}>
-          <input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)}
-            className="w-3.5 h-3.5 rounded-[3px] bg-[#0f121a] border-slate-600 text-cyan-500 focus:ring-0 m-0" />
-          <span className="leading-none">Forum</span>
-        </label>
+          {aiOpen && (
+            <div className="absolute z-20 mt-1 w-[150px] rounded-lg border border-slate-700/60 bg-[#0f131c] shadow-xl overflow-hidden py-1">
+              {models.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => { setModel(m.id); setAiOpen(false); }}
+                  className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#1a1f2e] ${model === m.id? 'text-cyan-300 bg-[#141722]' : 'text-slate-300'}`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {/* Kainoa */}
-        <label className={`${pill} cursor-pointer hover:bg-[#1a1f2e] ${useKainoa? 'border-cyan-900/50' : ''}`}>
-          <input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)}
-            className="w-3.5 h-3.5 rounded-[3px] bg-[#0f121a] border-slate-600 text-cyan-500 focus:ring-0 m-0" />
-          <span className="leading-none">Kainoa</span>
-        </label>
+        <TogglePill active={useForum} onClick={() => setUseForum(!useForum)}>Forum</TogglePill>
+        <TogglePill active={useKainoa} onClick={() => setUseKainoa(!useKainoa)}>Kainoa</TogglePill>
       </div>
 
-      <div ref={msgsRef} className="mb-3 space-y-3">
+      {/* Chat - unchanged */}
+      <div ref={msgsRef} className="mb-3 space-y-3 max-h-[60vh] overflow-y-auto">
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
-            <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-[14px]">{m.text}</div>
+            <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-[14px] leading-relaxed">
+              {m.text}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="relative">
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
+        <input
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&send()}
           placeholder="Ask Kainoa about citizenship..."
-          className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] outline-none" />
-        <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium hover:bg-cyan-500">Send</button>
+          className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] outline-none focus:ring-1 focus:ring-cyan-900/50"
+        />
+        <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium hover:bg-cyan-500 active:bg-cyan-700">
+          Send
+        </button>
       </div>
     </div>
   );
