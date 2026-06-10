@@ -15,14 +15,10 @@ export default function KainoaChat() {
   const engineRef = useRef(null);
   const msgsRef = useRef(null);
 
-  // FIX 1: use GitHub Pages base path
   const base = import.meta.env.BASE_URL;
 
   useEffect(() => {
-    // mobile check — disable AI automatically
-    if (!navigator.gpu) {
-      setAiStatus('AI: not supported on mobile');
-    }
+    if (!navigator.gpu) setAiStatus('AI: mobile not supported');
 
     Promise.allSettled([
       fetch(`${base}forum-index.json`).then(r => r.ok? r.json() : []),
@@ -93,53 +89,21 @@ export default function KainoaChat() {
 
     if (useForum &&!useAI) {
       const hits = searchForum(q);
-      addMessage(hits.length? hits.map(h => `${h.title}\n${base}${h.url || ''}`).join('\n\n') : 'No forum matches found.');
+      addMessage(hits.length? hits.map(h => `${h.title}\n${h.url}`).join('\n\n') : 'No forum matches found.');
       return;
     }
 
     if (useAI && navigator.gpu) {
       await loadAI();
-      const hits = searchForum(q);
-      let prompt = q;
-      if (hits.length) prompt += '\n\nContext:\n' + hits.map(h => `${h.title}`).join('\n');
-
       addMessage('...');
       const stream = await engineRef.current.chat.completions.create({
-        messages: [{ role: 'system', content: 'You are Kainoa, helpful TEP assistant. Be concise.' }, { role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: 'You are Kainoa, helpful TEP assistant. Be concise.' },
+          { role: 'user', content: q }
+        ],
         stream: true,
         temperature: 0.3
       });
       let txt = '';
       for await (const chunk of stream) {
-        txt += chunk.choices[0]?.delta?.content || '';
-        setMessages(m => {
-          const copy = [...m];
-          copy[copy.length - 1] = { role: 'bot', text: txt };
-          return copy;
-        });
-      }
-      return;
-    }
-
-    addMessage('Enable Kainoa, Forum, or AI above.');
-  };
-
-  return (
-    // FIX 2: center and constrain width for mobile alignment
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-black text-xs shrink-0">K</div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold truncate">Kainoa Controls</div>
-            <div className="text-[11px] text-slate-400 truncate">{idxStatus} • {aiStatus}</div>
-          </div>
-        <div className="flex items-center gap-3 text-xs">
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useAI} disabled={!navigator.gpu} onChange={e => setUseAI(e.target.checked)} className="accent-cyan-500" /> AI</label>
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useForum} onChange={e => setUseForum(e.target.checked)} className="accent-cyan-500" /> Forum</label>
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useKainoa} onChange={e => setUseKainoa(e.target.checked)} className="accent-cyan-500" /> Kainoa</label>
-        </div>
-      </div>
-
-      {/* Chat - responsive
+        txt += chunk.choices
