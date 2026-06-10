@@ -37,7 +37,7 @@ export default function KainoaChat() {
               <div className="text-xs text-slate-500">Community Assistant</div>
             </div>
           </div>
-          <div className="ml-auto flex gap-2">
+         <div className="ml-auto flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm">Phi-3.5 Mini</button>
             <Pill checked={useAI} onChange={e=>setUseAI(e.target.checked)}>AI</Pill>
             <Pill checked={useForum} onChange={e=>setUseForum(e.target.checked)}>Forum</Pill>
