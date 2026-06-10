@@ -18,9 +18,9 @@ export default function KainoaChat() {
   useEffect(() => {
     fetch(`${base}responses.json`).then(r => r.ok? r.json() : []).then(data => {
       setKainoaAnswers(data);
-      setIdxStatus(`0 topics • ${data.length} answers`);
-    }).catch(()=> setIdxStatus('Error loading'));
-    if (!navigator.gpu) setAiStatus('AI: mobile');
+      setIdxStatus(`${data.length} answers`);
+    }).catch(()=> setIdxStatus('Error'));
+    if (!navigator.gpu) setAiStatus('mobile');
   }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo(0, 99999); }, [messages]);
@@ -42,37 +42,54 @@ export default function KainoaChat() {
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      {/* CONTROLS - ALIGNED */}
-      <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <div className="flex items-center">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold">K</div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold">Kainoa Controls</div>
-              <div className="text-[11px] text-slate-400">{idxStatus} • {aiStatus}</div>
-            </div>
-          </div>
-          <div className="ml-3 flex gap-4">
-            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useAI} onChange={e=>setUseAI(e.target.checked)} className="accent-cyan-500"/>AI</label>
-            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)} className="accent-cyan-500"/>Forum</label>
-            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)} className="accent-cyan-500"/>Kainoa</label>
+      {/* DESIGN 3 - MINIMAL TOP BAR */}
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+          <span className="grid h-6 w-6 place-items-center rounded-md bg-cyan-600 text-[11px] font-bold leading-none">K</span>
+          Kainoa
+        </h2>
+        <div className="flex items-center gap-3">
+          <span className="hidden text-[11px] text-slate-500 sm:block">{idxStatus} • {aiStatus}</span>
+          <div className="flex items-center gap-2.5">
+            <label className="flex cursor-pointer items-center gap-1 text-[11px] text-slate-300">
+              <input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)} className="h-3.5 w-3.5 accent-cyan-500"/>
+              K
+            </label>
+            <label className="flex cursor-pointer items-center gap-1 text-[11px] text-slate-300">
+              <input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)} className="h-3.5 w-3.5 accent-cyan-500"/>
+              F
+            </label>
+            <label className="flex cursor-not-allowed items-center gap-1 text-[11px] text-slate-500">
+              <input type="checkbox" checked={useAI} disabled className="h-3.5 w-3.5 accent-cyan-500"/>
+              AI
+            </label>
           </div>
         </div>
       </div>
 
       {/* CHAT */}
-      <div ref={msgsRef} className="mb-3 h-[50vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+      <div ref={msgsRef} className="mb-3 h-[55vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-4 sm:h-[60vh]">
         {messages.map((m,i)=>(
-          <div key={i} className={`mb-2 flex ${m.role==='user'?'justify-end':'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${m.role==='user'?'bg-cyan-900/30':'bg-slate-900'}`}>{m.text}</div>
+          <div key={i} className={`mb-2.5 flex ${m.role==='user'?'justify-end':'justify-start'}`}>
+            <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[14px] leading-snug ${m.role==='user'?'bg-cyan-900/30 border border-cyan-800/50':'bg-slate-900 border border-slate-800'}`}>
+              {m.text}
+            </div>
           </div>
         ))}
       </div>
 
       {/* INPUT */}
       <div className="flex gap-2">
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about citizenship…" className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm"/>
-        <button onClick={send} className="rounded-xl bg-cyan-600 px-4 py-2 text-sm">Send</button>
+        <input
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&send()}
+          placeholder="Ask about citizenship…"
+          className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-cyan-800"
+        />
+        <button onClick={send} className="shrink-0 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-medium transition hover:bg-cyan-500 active:bg-cyan-700">
+          Send
+        </button>
       </div>
     </div>
   );
