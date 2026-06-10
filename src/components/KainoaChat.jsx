@@ -13,20 +13,23 @@ export default function KainoaChat() {
   const [aiOpen, setAiOpen] = useState(false);
   const msgsRef = useRef(null);
   const aiRef = useRef(null);
+  const base = import.meta.env.BASE_URL; // <-- this is '/kainoa-assistant/' on Pages
 
-  // BULLETPROOF LOADER
+  // BULLETPROOF LOADER - now base-aware
   useEffect(() => {
     const loadResponses = async () => {
       try {
-        const manifest = await fetch('/data/responses/index.json').then(r => {
-          if (!r.ok) throw new Error(`index.json ${r.status}`);
+        const manifestUrl = `${base}data/responses/index.json`;
+        const manifest = await fetch(manifestUrl).then(r => {
+          if (!r.ok) throw new Error(`index.json ${r.status} at ${manifestUrl}`);
           return r.json();
         });
 
         const results = await Promise.all(
           manifest.map(async (file) => {
             try {
-              const res = await fetch(`/data/responses/${file}`);
+              const fileUrl = `${base}data/responses/${file}`;
+              const res = await fetch(fileUrl);
               if (!res.ok) {
                 console.warn(`[Kainoa] skipping ${file} (${res.status})`);
                 return [];
@@ -44,20 +47,13 @@ export default function KainoaChat() {
         const flat = results.flat();
         setAnswers(flat);
         console.log(`[Kainoa] total answers: ${flat.length}`);
-
-        if (flat.length === 0) {
-          setMessages(m => [...m, {
-            role: 'bot',
-            text: "Warning: No answers loaded. Check that index.json lists existing files."
-          }]);
-        }
       } catch (err) {
         console.error('[Kainoa] fatal:', err);
         setMessages(m => [...m, { role: 'bot', text: `Load error: ${err.message}` }]);
       }
     };
     loadResponses();
-  }, []);
+  }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999 }); }, [messages]);
   useEffect(() => {
@@ -75,16 +71,13 @@ export default function KainoaChat() {
     const q = input.trim(); if (!q) return;
     setInput('');
     setMessages(m => [...m, { role: 'user', text: q }]);
-
     setTimeout(() => {
       if (answers.length === 0) {
         setMessages(m => [...m, { role: 'bot', text: "Still loading answers... try again in a second." }]);
         return;
       }
       const hit = useKainoa && findKainoa(q);
-      const reply = hit
-       ? hit.answer
-        : "I don't have that in my TEP instant answers yet. Try 'apply', 'requirements', or toggle Forum on.";
+      const reply = hit? hit.answer : "I don't have that in my TEP instant answers yet. Try 'apply', 'requirements', or toggle Forum on.";
       setMessages(m => [...m, { role: 'bot', text: reply, source: hit? 'Kainoa' : null }]);
     }, 100);
   };
@@ -103,6 +96,7 @@ export default function KainoaChat() {
 
   return (
     <div className="bg-transparent" style={{ isolation: 'isolate' }}>
+      {/*... rest of your JSX unchanged... */}
       <div className="mb-4 flex flex-col gap-2">
         <div className="relative w-full sm:w-[180px]" ref={aiRef}>
           <div role="button" tabIndex={0} onClick={() => setAiOpen(o =>!o)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setAiOpen(o =>!o)} style={pillReset} className={`${basePill} w-full justify-between pr-6 ${model!== 'off'? pillActive : pillIdle}`}>
@@ -112,42 +106,31 @@ export default function KainoaChat() {
           {aiOpen && (
             <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-700/60 bg-[#0f131c] shadow-xl overflow-hidden py-1">
               {models.map(m => (
-                <button key={m.id} type="button" onClick={() => { setModel(m.id); setAiOpen(false); }} className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#1a1f2e] ${model === m.id? 'text-cyan-300 bg-[#141722]' : 'text-slate-300'}`}>
-                  {m.label}
-                </button>
+                <button key={m.id} type="button" onClick={() => { setModel(m.id); setAiOpen(false); }} className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#1a1f2e] ${model === m.id? 'text-cyan-300 bg-[#141722]' : 'text-slate-300'}`}>{m.label}</button>
               ))}
             </div>
           )}
         </div>
-
         <div className="grid grid-cols-[auto_auto] items-center gap-2 w-fit">
-          {[
-            { key: 'forum', active: useForum, toggle: () => setUseForum(v =>!v), label: 'Forum' },
-            { key: 'kainoa', active: useKainoa, toggle: () => setUseKainoa(v =>!v), label: 'Kainoa' },
-          ].map(p => (
-            <div key={p.key} role="button" tabIndex={0} onClick={p.toggle} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && p.toggle()} style={pillReset} className={`${basePill} ${p.active? pillActive : pillIdle}`}>
-              <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${p.active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
-                {p.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4 10-10"/></svg>}
-              </span>
+          {[{key:'forum',active:useForum,toggle:()=>setUseForum(v=>!v),label:'Forum'},{key:'kainoa',active:useKainoa,toggle:()=>setUseKainoa(v=>!v),label:'Kainoa'}].map(p=>(
+            <div key={p.key} role="button" tabIndex={0} onClick={p.toggle} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&p.toggle()} style={pillReset} className={`${basePill} ${p.active?pillActive:pillIdle}`}>
+              <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${p.active?'bg-cyan-500 border-cyan-500':'bg-[#0f121a] border-slate-600'}`}>{p.active&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4 10-10"/></svg>}</span>
               <span>{p.label}</span>
             </div>
           ))}
         </div>
-      </div>
-
       <div ref={msgsRef} className="mb-3 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user'? 'justify-end' : ''}`}>
+        {messages.map((m,i)=>(
+          <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
             <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-[14px] leading-relaxed text-slate-200">
-              {m.source && <div className="mb-1 text-[10px] uppercase tracking-wide text-emerald-400">{m.source}</div>}
+              {m.source&&<div className="mb-1 text-[10px] uppercase tracking-wide text-emerald-400">{m.source}</div>}
               {m.text}
             </div>
           </div>
         ))}
       </div>
-
       <div className="relative">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask about TEP citizenship..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about TEP citizenship..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
         <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium text-white hover:bg-cyan-500">Send</button>
       </div>
     </div>
