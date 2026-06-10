@@ -15,51 +15,59 @@ export default function KainoaChat() {
   const engineRef = useRef(null);
   const msgsRef = useRef(null);
 
+  // FIX 1: use GitHub Pages base path
+  const base = import.meta.env.BASE_URL;
+
   useEffect(() => {
+    // mobile check — disable AI automatically
+    if (!navigator.gpu) {
+      setAiStatus('AI: not supported on mobile');
+    }
+
     Promise.allSettled([
-      fetch('/forum-index.json').then(r => r.ok ? r.json() : []),
-      fetch('/responses.json').then(r => r.ok ? r.json() : [])
+      fetch(`${base}forum-index.json`).then(r => r.ok? r.json() : []),
+      fetch(`${base}responses.json`).then(r => r.ok? r.json() : [])
     ]).then(([f, k]) => {
-      const forum = f.status === 'fulfilled' ? f.value : [];
-      const kainoa = k.status === 'fulfilled' ? k.value : [];
+      const forum = f.status === 'fulfilled'? f.value : [];
+      const kainoa = k.status === 'fulfilled'? k.value : [];
       setForumIdx(forum);
       setKainoaAnswers(kainoa);
       setIdxStatus(`${forum.length} topics • ${kainoa.length} Kainoa answers`);
     });
-  }, []);
+  }, [base]);
 
   useEffect(() => {
     if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
   }, [messages]);
 
   const addMessage = (text, user = false) => {
-    setMessages(m => [...m, { role: user ? 'user' : 'bot', text }]);
+    setMessages(m => [...m, { role: user? 'user' : 'bot', text }]);
   };
 
   const findKainoa = (q) => {
-    if (!useKainoa || !kainoaAnswers.length) return null;
+    if (!useKainoa ||!kainoaAnswers.length) return null;
     const lower = q.toLowerCase();
-    return kainoaAnswers.find(item => 
+    return kainoaAnswers.find(item =>
       item.keywords?.some(kw => lower.includes(kw.toLowerCase()))
     );
   };
 
   const searchForum = (q) => {
-    if (!useForum || !forumIdx.length) return [];
+    if (!useForum ||!forumIdx.length) return [];
     const terms = q.toLowerCase().split(/\W+/).filter(t => t.length > 2);
     return forumIdx
-      .map(i => {
+     .map(i => {
         const txt = (i.title + ' ' + (i.excerpt || '')).toLowerCase();
-        const score = terms.reduce((s, t) => s + (txt.includes(t) ? 1 : 0), 0);
-        return { ...i, score };
+        const score = terms.reduce((s, t) => s + (txt.includes(t)? 1 : 0), 0);
+        return {...i, score };
       })
-      .filter(i => i.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
+     .filter(i => i.score > 0)
+     .sort((a, b) => b.score - a.score)
+     .slice(0, 3);
   };
 
   const loadAI = async () => {
-    if (engineRef.current) return;
+    if (engineRef.current ||!navigator.gpu) return;
     setAiStatus('AI: loading…');
     const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
     const engine = await CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC', {
@@ -75,7 +83,6 @@ export default function KainoaChat() {
     setInput('');
     addMessage(q, true);
 
-    // 1. Kainoa answers first
     const match = findKainoa(q);
     if (match) {
       addMessage(`🌺 ${match.answer}`);
@@ -84,22 +91,19 @@ export default function KainoaChat() {
       return;
     }
 
-    // 2. Forum only
-    if (useForum && !useAI) {
+    if (useForum &&!useAI) {
       const hits = searchForum(q);
-      addMessage(hits.length ? hits.map(h => `${h.title}\n${h.url}`).join('\n\n') : 'No forum matches found.');
+      addMessage(hits.length? hits.map(h => `${h.title}\n${base}${h.url || ''}`).join('\n\n') : 'No forum matches found.');
       return;
     }
 
-    // 3. AI
-    if (useAI) {
+    if (useAI && navigator.gpu) {
       await loadAI();
       const hits = searchForum(q);
       let prompt = q;
-      if (hits.length) prompt += '\n\nContext:\n' + hits.map(h => `${h.title} - ${h.url}`).join('\n');
-      
-      addMessage('...'); 
-      const idx = messages.length + 1;
+      if (hits.length) prompt += '\n\nContext:\n' + hits.map(h => `${h.title}`).join('\n');
+
+      addMessage('...');
       const stream = await engineRef.current.chat.completions.create({
         messages: [{ role: 'system', content: 'You are Kainoa, helpful TEP assistant. Be concise.' }, { role: 'user', content: prompt }],
         stream: true,
@@ -121,47 +125,21 @@ export default function KainoaChat() {
   };
 
   return (
-    <div className="w-full">
+    // FIX 2: center and constrain width for mobile alignment
+    <div className="w-full max-w-4xl mx-auto">
       {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-black text-xs">K</div>
-          <div>
-            <div className="text-sm font-semibold">Kainoa Controls</div>
-            <div className="text-[11px] text-slate-400">{idxStatus} • {aiStatus}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-black text-xs shrink-0">K</div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold truncate">Kainoa Controls</div>
+            <div className="text-[11px] text-slate-400 truncate">{idxStatus} • {aiStatus}</div>
           </div>
-        </div>
         <div className="flex items-center gap-3 text-xs">
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} className="accent-cyan-500" /> AI</label>
+          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useAI} disabled={!navigator.gpu} onChange={e => setUseAI(e.target.checked)} className="accent-cyan-500" /> AI</label>
           <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useForum} onChange={e => setUseForum(e.target.checked)} className="accent-cyan-500" /> Forum</label>
           <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={useKainoa} onChange={e => setUseKainoa(e.target.checked)} className="accent-cyan-500" /> Kainoa</label>
         </div>
       </div>
 
-      {/* Chat */}
-      <div ref={msgsRef} className="h-[60vh] overflow-y-auto space-y-3 p-4 rounded-2xl bg-slate-950/50 border border-slate-800 mb-3">
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] whitespace-pre-wrap ${m.role === 'user' ? 'bg-cyan-600/20 border border-cyan-500/30' : 'bg-slate-900 border border-slate-800'}`}>
-              {m.text}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Input - fixed, no overlap */}
-      <div className="flex items-end gap-2 p-2 rounded-2xl bg-slate-900/70 border border-slate-800">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Ask Kainoa about citizenship…"
-          rows={1}
-          className="flex-1 bg-transparent outline-none resize-none max-h-32 text-sm px-2 py-1.5 placeholder-slate-500 leading-6"
-          style={{ fieldSizing: 'content' }}
-        />
-        <button onClick={handleSend} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-xs font-medium transition">Send</button>
-      </div>
-    </div>
-  );
-}
+      {/* Chat - responsive
