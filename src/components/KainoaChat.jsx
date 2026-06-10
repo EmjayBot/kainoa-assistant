@@ -4,7 +4,7 @@ export default function KainoaChat() {
   const [forumIdx, setForumIdx] = useState([]);
   const [kainoaAnswers, setKainoaAnswers] = useState([]);
   const [messages, setMessages] = useState([
-    { role: 'bot', text: "Aloha! I'm Kainoa. Type 'citizenship' to test." }
+    { role: 'bot', text: "Aloha! I'm Kainoa. Type 'citizenship'." }
   ]);
   const [input, setInput] = useState('');
   const [useAI, setUseAI] = useState(false);
@@ -16,72 +16,63 @@ export default function KainoaChat() {
   const base = import.meta.env.BASE_URL;
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [fRes, kRes] = await Promise.all([
-          fetch(`${base}forum-index.json`),
-          fetch(`${base}responses.json`)
-        ]);
-        const forum = fRes.ok? await fRes.json() : [];
-        const kainoa = kRes.ok? await kRes.json() : [];
-        setForumIdx(forum);
-        setKainoaAnswers(kainoa);
-        setIdxStatus(`${forum.length} topics • ${kainoa.length} answers`);
-        console.log('Loaded from', base, forum.length, kainoa.length);
-      } catch (e) {
-        setIdxStatus('Error loading JSON');
-        console.error(e);
-      }
-    };
-    load();
-    if (!navigator.gpu) setAiStatus('AI: mobile off');
+    fetch(`${base}responses.json`).then(r => r.ok? r.json() : []).then(data => {
+      setKainoaAnswers(data);
+      setIdxStatus(`0 topics • ${data.length} answers`);
+    }).catch(()=> setIdxStatus('Error loading'));
+    if (!navigator.gpu) setAiStatus('AI: mobile');
   }, [base]);
 
-  useEffect(() => { msgsRef.current?.scrollTo(0, 999999); }, [messages]);
+  useEffect(() => { msgsRef.current?.scrollTo(0, 99999); }, [messages]);
 
-  const findKainoa = (q) => {
+  const findAnswer = (q) => {
     const lower = q.toLowerCase();
-    return kainoaAnswers.find(a => a.keywords?.some(k => lower.includes(k.toLowerCase())));
+    return kainoaAnswers.find(a => a.keywords?.some(k => lower.includes(k)));
   };
 
-  const handleSend = () => {
+  const send = () => {
     const q = input.trim(); if (!q) return;
-    setInput(''); setMessages(m => [...m, {role:'user', text:q}]);
-    const hit = useKainoa && findKainoa(q);
-    setMessages(m => [...m, {role:'bot', text: hit? `🌺 ${hit.answer}` : 'No match (check responses.json path)'}]);
+    setInput('');
+    setMessages(m => [...m, {role:'user', text:q}]);
+    const hit = useKainoa && findAnswer(q);
+    setTimeout(() => {
+      setMessages(m => [...m, {role:'bot', text: hit? `🌺 ${hit.answer}` : 'Try "citizenship", "amendments", or "roster"'}]);
+    }, 100);
   };
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      {/* Controls - fixed alignment */}
+      {/* CONTROLS - ALIGNED */}
       <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold">K</div>
-            <div>
-              <div className="font-semibold">Kainoa Controls</div>
-              <div className="text-xs text-slate-400">{idxStatus} • {aiStatus}</div>
+        <div className="flex items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 font-bold">K</div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">Kainoa Controls</div>
+              <div className="text-[11px] text-slate-400">{idxStatus} • {aiStatus}</div>
             </div>
           </div>
-        </div>
-        <div className="mt-3 flex gap-5 text-sm">
-          <label className="flex items-center gap-1.5"><input type="checkbox" checked={useAI} onChange={e=>setUseAI(e.target.checked)} disabled/> AI</label>
-          <label className="flex items-center gap-1.5"><input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)}/> Forum</label>
-          <label className="flex items-center gap-1.5"><input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)}/> Kainoa</label>
+          <div className="ml-3 flex gap-4">
+            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useAI} onChange={e=>setUseAI(e.target.checked)} className="accent-cyan-500"/>AI</label>
+            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)} className="accent-cyan-500"/>Forum</label>
+            <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)} className="accent-cyan-500"/>Kainoa</label>
+          </div>
         </div>
       </div>
 
-      <div ref={msgsRef} className="mb-3 h-[52vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+      {/* CHAT */}
+      <div ref={msgsRef} className="mb-3 h-[50vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
         {messages.map((m,i)=>(
-          <div key={i} className={`mb-3 flex ${m.role==='user'?'justify-end':'justify-start'}`}>
-            <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-[14px] ${m.role==='user'?'bg-cyan-900/40':'bg-slate-900'}`}>{m.text}</div>
+          <div key={i} className={`mb-2 flex ${m.role==='user'?'justify-end':'justify-start'}`}>
+            <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${m.role==='user'?'bg-cyan-900/30':'bg-slate-900'}`}>{m.text}</div>
           </div>
         ))}
       </div>
 
+      {/* INPUT */}
       <div className="flex gap-2">
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSend()} placeholder="Type citizenship…" className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm outline-none"/>
-        <button onClick={handleSend} className="rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-medium">Send</button>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about citizenship…" className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm"/>
+        <button onClick={send} className="rounded-xl bg-cyan-600 px-4 py-2 text-sm">Send</button>
       </div>
     </div>
   );
