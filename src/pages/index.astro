@@ -1,21 +1,13 @@
 ---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import KainoaChat from '../components/KainoaChat.jsx';
 import SiteFooter from '../components/SiteFooter.astro';
 ---
-<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-  <meta charset="utf-8" />
-  <title>Kainoa Assistant — TEP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-</head>
-<body class="bg-[#070b14] text-slate-200 antialiased">
-  <KainoaChat client:load />
-  <SiteFooter />
-  <style is:global>
-    html,body { background:#070b14 }
-    /* hide Starlight UI if it leaks in */
-   .sl-nav,.sl-sidebar,.header { display:none!important }
-  </style>
-</body>
-</html>
+
+<StarlightPage frontmatter={{ title: 'Kainoa Assistant', description: 'TEP Community Assistant' }}>
+  <div class="-mx-4 sm:mx-0">
+    <KainoaChat client:load />
+  </div>
+</StarlightPage>
+
+<SiteFooter />
