@@ -39,7 +39,7 @@ export default function KainoaChat() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  // Kainoa keyword matcher (fixed syntax)
+  // Kainoa keyword matcher
   const findKainoa = (q) => {
     const ql = q.toLowerCase().trim();
     let best = null, bestScore = 0;
@@ -57,48 +57,24 @@ export default function KainoaChat() {
     return bestScore > 20? best : null;
   };
 
-  // Discourse forum search - works with posts + CORS fallback
+  // WORKING Discourse search - uses public HTML via Jina
   const searchForum = async (q) => {
-    const query = encodeURIComponent(q);
-    const endpoints = [
-      `https://forum.theeastpacific.com/search.json?q=${query}`,
-      `https://r.jina.ai/http://forum.theeastpacific.com/search.json?q=${query}`
-    ];
+    try {
+      const url = `https://r.jina.ai/http://forum.theeastpacific.com/search?q=${encodeURIComponent(q)}`;
+      const text = await fetch(url).then(r => r.text());
 
-    for (const url of endpoints) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const data = await res.json();
+      // Extract markdown links to topics
+      const links = [...text.matchAll(/\[([^\]]+)\]\(https:\/\/forum\.theeastpacific\.com\/t\/[^)]+\)/g)]
+       .map(m => m[0])
+       .filter((v, i, a) => a.indexOf(v) === i)
+       .slice(0, 5);
 
-        const posts = data.posts || [];
-        const topics = data.topics || [];
-        const topicMap = Object.fromEntries(topics.map(t => [t.id, t]));
-
-        const results = posts.slice(0, 5).map(p => {
-          const t = topicMap[p.topic_id] || {};
-          const title = t.title || p.topic_title || 'Forum Post';
-          const slug = t.slug || '';
-          const link = `https://forum.theeastpacific.com/t/${slug}/${p.topic_id}/${p.post_number || 1}`;
-          const date = t.last_posted_at? new Date(t.last_posted_at).toLocaleDateString() : '';
-          return `• [${title}](${link})${date? ` — ${date}` : ''}`;
-        });
-
-        if (results.length) return results.join('\n');
-
-        // fallback to topics if no posts
-        if (topics.length) {
-          return topics.slice(0, 3).map(t => {
-            const link = `https://forum.theeastpacific.com/t/${t.slug}/${t.id}`;
-            const date = new Date(t.last_posted_at).toLocaleDateString();
-            return `• [${t.title}](${link}) — ${date}`;
-          }).join('\n');
-        }
-      } catch (e) {
-        console.warn('Forum search failed:', e);
-      }
+      if (!links.length) return null;
+      return links.map(l => `• ${l}`).join('\n');
+    } catch (e) {
+      console.error('Forum search error:', e);
+      return null;
     }
-    return null;
   };
 
   const send = async () => {
@@ -157,7 +133,7 @@ export default function KainoaChat() {
         <div className="grid grid-cols-[auto_auto] items-center gap-2 w-fit">
           {[{key:'forum',active:useForum,toggle:()=>setUseForum(v=>!v),label:'Forum'},{key:'kainoa',active:useKainoa,toggle:()=>setUseKainoa(v=>!v),label:'Kainoa'}].map(p=>(
             <div key={p.key} onClick={p.toggle} style={pillReset} className={`${basePill} ${p.active? pillActive : pillIdle}`}>
-              <span className={`w-3.5 h-3.5 rounded- border flex items-center justify-center ${p.active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
+              <span className={`w-3.5 h-3.5 rounded- border flex items-center justify-center shrink-0 ${p.active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
                 {p.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}
               </span>
               <span>{p.label}</span>
@@ -178,7 +154,7 @@ export default function KainoaChat() {
       </div>
 
       <div className="relative">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask about TEP..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text- text-slate-100 placeholder-slate-500 outline-none" />
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask about TEP..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text- text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
         <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium text-white hover:bg-cyan-500">Send</button>
       </div>
     </div>
