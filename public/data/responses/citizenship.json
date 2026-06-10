@@ -1,26 +1,19 @@
 [
   {
     "keywords": [
-      "apply", "application", "apply for citizenship", "how to apply",
-      "become citizen", "become a citizen", "how to become citizen", "how to become a citizen",
-      "join", "join tep", "citizen", "citizenship", "tep citizen", "new citizen",
-      "get citizenship", "citizenship how"
+      "apply",
+      "application",
+      "citizen",
+      "citizenship",
+      "become citizen",
+      "become a citizen",
+      "how to become",
+      "how do i become",
+      "how to join",
+      "join",
+      "new citizen",
+      "tep citizen"
     ],
-    "answer": "To become a TEP Citizen: 1) Post in the Citizenship thread with your WA nation in TEP, 2) Reply to the telegram from a Citizenship Official, 3) Wait for acceptance. You must maintain that WA nation and residency in TEP."
-  },
-  {
-    "keywords": [
-      "where", "where apply", "where to apply", "thread", "application thread",
-      "link", "forum", "where post", "citizenship thread"
-    ],
-    "answer": "Use the official Citizenship Application thread in 'Newcomers Start Here' on forum.theeastpacific.com. The Citizenship Office posts acceptances/denials there."
-  },
-  {
-    "keywords": [
-      "lose", "lose citizenship", "lost", "removed", "revoked", "invalid",
-      "audit", "12 hours", "12h", "keep citizenship", "maintain", "residency",
-      "leave tep", "leave wa"
-    ],
-    "answer": "Citizenship becomes invalid 12 hours after you leave TEP or leave the WA on your recorded nation. Return and post in the thread within 12 hours to keep it."
+    "answer": "To become a TEP Citizen: 1) Post in the Citizenship thread with your WA nation in TEP, 2) Reply 'CONFIRM' to the telegram a Citizenship Official sends you, 3) Wait for the Office to accept. You must maintain that WA nation and residency."
   }
 ]
