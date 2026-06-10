@@ -16,54 +16,46 @@ export default function KainoaChat() {
   const find = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
   const send = () => { const q=input.trim(); if(!q) return; setInput(''); setMessages(m=>[...m,{role:'user',text:q}]); const hit=useKainoa&&find(q); setTimeout(()=>setMessages(m=>[...m,{role:'bot',text:hit?hit.answer:"Try 'citizenship'"}]),100); };
 
-  // ONE pill style for everything
-  const pillBase = "h-7 px-2.5 inline-flex items-center gap-1.5 rounded-lg border text-[12px] transition-colors";
-  const pillIdle = "border-slate-700/40 bg-[#141722] text-slate-300 hover:bg-[#1a1f2e]";
-  const pillActive = "border-cyan-800/60 bg-[#141722] text-cyan-300";
-
-  const TogglePill = ({ active, onClick, children }) => (
-    <button type="button" onClick={onClick} className={`${pillBase} ${active? pillActive : pillIdle}`}>
-      <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
-        {active && (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-            <path d="M5 13l4 4 10-10" />
-          </svg>
-        )}
-      </span>
-      <span className="leading-none">{children}</span>
-    </button>
-  );
+  const pill = "h-7 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-700/40 bg-[#141722] text-[12px] text-slate-300";
 
   return (
     <div className="bg-transparent">
       <div className="mb-4 flex flex-wrap items-center gap-2">
 
-        {/* AI - now uses same height/structure as the others */}
-        <div className="relative">
-          <select
-            value={model}
-            onChange={e=>setModel(e.target.value)}
-            className={`${pillBase} ${model!=='off'? pillActive : pillIdle} appearance-none pr-6 cursor-pointer`}
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a6378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 6px center',
-              minWidth: '95px',
-              lineHeight: '1'
-            }}
-          >
-            <option value="off">AI: Off</option>
-            <option value="phi-3.5-mini">AI: Phi-3.5</option>
-            <option value="phi-3-medium">AI: Phi-3 Med</option>
-            <option value="llama-3.2-3b">AI: Llama 3.2</option>
-          </select>
-        </div>
+        {/* AI - NUDGED UP 2px to match */}
+        <select
+          value={model}
+          onChange={e=>setModel(e.target.value)}
+          className={`${pill} appearance-none pr-6 cursor-pointer hover:bg-[#1a1f2e] focus:outline-none -translate-y-[1.5px]`}
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a6378' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 6px center',
+            minWidth: '95px',
+            lineHeight: '1'
+          }}
+        >
+          <option value="off">AI: Off</option>
+          <option value="phi-3.5-mini">AI: Phi-3.5</option>
+          <option value="phi-3-medium">AI: Phi-3 Med</option>
+          <option value="llama-3.2-3b">AI: Llama 3.2</option>
+        </select>
 
-        <TogglePill active={useForum} onClick={()=>setUseForum(!useForum)}>Forum</TogglePill>
-        <TogglePill active={useKainoa} onClick={()=>setUseKainoa(!useKainoa)}>Kainoa</TogglePill>
+        {/* Forum */}
+        <label className={`${pill} cursor-pointer hover:bg-[#1a1f2e] ${useForum? 'border-cyan-900/50' : ''}`}>
+          <input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)}
+            className="w-3.5 h-3.5 rounded-[3px] bg-[#0f121a] border-slate-600 text-cyan-500 focus:ring-0 m-0" />
+          <span className="leading-none">Forum</span>
+        </label>
+
+        {/* Kainoa */}
+        <label className={`${pill} cursor-pointer hover:bg-[#1a1f2e] ${useKainoa? 'border-cyan-900/50' : ''}`}>
+          <input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)}
+            className="w-3.5 h-3.5 rounded-[3px] bg-[#0f121a] border-slate-600 text-cyan-500 focus:ring-0 m-0" />
+          <span className="leading-none">Kainoa</span>
+        </label>
       </div>
 
-      {/* Chat */}
       <div ref={msgsRef} className="mb-3 space-y-3">
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
