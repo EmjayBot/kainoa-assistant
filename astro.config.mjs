@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/kainoa-assistant/',
   integrations: [
     starlight({
-      title: 'Kainoa Starlight',
+      title: 'Kainoa Assistant',
       social: {
         github: 'https://github.com/EmjayBot/kainoa-assistant',
       },
