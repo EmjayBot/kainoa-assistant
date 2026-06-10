@@ -4,7 +4,7 @@ export default function KainoaChat() {
   const [answers, setAnswers] = useState([]);
   const [messages, setMessages] = useState([{
     role: 'bot',
-    text: "Aloha! I'm Kainoa. Type 'citizenship' to test my instant answers!"
+    text: "Aloha! I'm Kainoa. Ask about TEP citizenship — try 'apply' or 'how to become a citizen'."
   }]);
   const [input, setInput] = useState('');
   const [model, setModel] = useState('off');
@@ -15,20 +15,45 @@ export default function KainoaChat() {
   const aiRef = useRef(null);
   const base = import.meta.env.BASE_URL;
 
-  useEffect(() => { fetch(`${base}responses.json`).then(r=>r.json()).then(setAnswers).catch(()=>{}); }, [base]);
+  // NEW: load split response files for TEP
+  useEffect(() => {
+    const loadResponses = async () => {
+      try {
+        const manifest = await fetch(`${base}data/responses/index.json`).then(r => r.json());
+        const files = await Promise.all(
+          manifest.map(file => fetch(`${base}data/responses/${file}`).then(r => r.json()))
+        );
+        setAnswers(files.flat());
+      } catch (err) {
+        console.error('Failed to load TEP responses:', err);
+      }
+    };
+    loadResponses();
+  }, [base]);
+
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999 }); }, [messages]);
+
   useEffect(() => {
     const onClick = (e) => { if (aiRef.current &&!aiRef.current.contains(e.target)) setAiOpen(false); };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  const find = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
+  const findKainoa = q => answers.find(a => a.keywords?.some(k => q.toLowerCase().includes(k)));
+
   const send = () => {
     const q = input.trim(); if (!q) return;
-    setInput(''); setMessages(m => [...m, { role: 'user', text: q }]);
-    const hit = useKainoa && find(q);
-    setTimeout(() => setMessages(m => [...m, { role: 'bot', text: hit? hit.answer : "Try 'citizenship'" }]), 100);
+    setInput('');
+    setMessages(m => [...m, { role: 'user', text: q }]);
+
+    setTimeout(() => {
+      const hit = useKainoa && findKainoa(q);
+      const reply = hit
+       ? hit.answer
+        : "I don't have that in my TEP instant answers yet. Try 'apply', 'requirements', or toggle Forum on.";
+
+      setMessages(m => [...m, { role: 'bot', text: reply, source: hit? 'Kainoa' : null }]);
+    }, 100);
   };
 
   const models = [
@@ -38,7 +63,7 @@ export default function KainoaChat() {
     { id: 'llama-3.2-3b', label: 'AI: Llama 3.2' },
   ];
 
-  // TARGETED reset — not all:unset
+  // targeted reset (no all:unset so pills keep their style)
   const pillReset = {
     display: 'flex',
     alignItems: 'center',
@@ -55,13 +80,13 @@ export default function KainoaChat() {
   return (
     <div className="bg-transparent" style={{ isolation: 'isolate' }}>
       <div className="mb-4 flex flex-col gap-2">
-
         {/* AI */}
         <div className="relative w-full sm:w-[180px]" ref={aiRef}>
           <div
             role="button"
             tabIndex={0}
             onClick={() => setAiOpen(o =>!o)}
+            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setAiOpen(o =>!o)}
             style={pillReset}
             className={`${basePill} w-full justify-between pr-6 ${model!== 'off'? pillActive : pillIdle}`}
           >
@@ -85,14 +110,7 @@ export default function KainoaChat() {
             { key: 'forum', active: useForum, toggle: () => setUseForum(v =>!v), label: 'Forum' },
             { key: 'kainoa', active: useKainoa, toggle: () => setUseKainoa(v =>!v), label: 'Kainoa' },
           ].map(p => (
-            <div
-              key={p.key}
-              role="button"
-              tabIndex={0}
-              onClick={p.toggle}
-              style={pillReset}
-              className={`${basePill} ${p.active? pillActive : pillIdle}`}
-            >
+            <div key={p.key} role="button" tabIndex={0} onClick={p.toggle} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && p.toggle()} style={pillReset} className={`${basePill} ${p.active? pillActive : pillIdle}`}>
               <span className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center shrink-0 ${p.active? 'bg-cyan-500 border-cyan-500' : 'bg-[#0f121a] border-slate-600'}`}>
                 {p.active && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><path d="M5 13l4 4 10-10"/></svg>}
               </span>
@@ -106,13 +124,17 @@ export default function KainoaChat() {
       <div ref={msgsRef} className="mb-3 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user'? 'justify-end' : ''}`}>
-            <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-[14px] leading-relaxed text-slate-200">{m.text}</div>
+            <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-[14px] leading-relaxed text-slate-200">
+              {m.source && <div className="mb-1 text-[10px] uppercase tracking-wide text-emerald-400">{m.source}</div>}
+              {m.text}
+            </div>
           </div>
         ))}
       </div>
 
+      {/* Input */}
       <div className="relative">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask Kainoa about citizenship..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask about TEP citizenship..." className="w-full rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3.5 pr-24 text-[14px] text-slate-100 placeholder-slate-500 outline-none focus:ring-1 focus:ring-cyan-900/50" />
         <button onClick={send} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-medium text-white hover:bg-cyan-500">Send</button>
       </div>
     </div>
