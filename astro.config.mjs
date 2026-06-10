@@ -1,30 +1,23 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://kainoa.tep',
+  site: 'https://emjaybot.github.io',
+  base: '/kainoa-assistant/',
   integrations: [
-    react(),
-    tailwind({ applyBaseStyles: false }),
     starlight({
-      title: 'Kainoa',
-      logo: {
-        src: './src/assets/k.svg',
-      },
+      title: 'Kainoa Starlight',
       social: {
-        discord: 'https://discord.gg/theeastpacific',
-        'x.com': 'https://x.com',
+        github: 'https://github.com/EmjayBot/kainoa-assistant',
       },
-      customCss: ['./src/styles/custom.css'],
-      sidebar: [], // no docs sidebar
-      head: [
+      sidebar: [
         {
-          tag: 'meta',
-          attrs: { name: 'description', content: 'Kainoa — TEP Community Assistant' }
-        }
+          label: 'Kainoa',
+          items: [{ label: 'Assistant', link: '/kainoa/' }],
+        },
       ],
     }),
+    tailwind(),
   ],
 });
