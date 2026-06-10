@@ -35,38 +35,34 @@ export default function KainoaChat() {
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      {/* FIXED CONTROLS - no wrap, perfect baseline */}
-      <div className="mb-3 flex h-8 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center rounded-md bg-cyan-600 text-[11px] font-bold text-white">K</span>
-          <span className="text-[15px] font-semibold text-slate-100">Kainoa</span>
+      {/* STACKED CONTROLS */}
+      <div className="mb-3 flex items-start justify-between">
+        <div className="flex items-center gap-2 pt-1">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-cyan-600 text-sm font-bold text-white">K</span>
+          <span className="text-base font-semibold text-slate-100">Kainoa</span>
         </div>
 
-        {/* the key: flex-nowrap + shrink-0 + translate-y-px on inputs */}
-        <div className="flex shrink-0 flex-nowrap items-center gap-3">
-          <label className="flex items-center gap-1.5">
-            <input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)}
-              className="h-4 w-4 translate-y-[0.5px] accent-cyan-500" />
-            <span className="text-[13px] leading-none text-slate-300">K</span>
+        <div className="flex flex-col items-start gap-1.5 pr-1">
+          <label className="flex items-center gap-2 text-[13px] text-slate-400">
+            <input type="checkbox" checked={useAI} disabled className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-cyan-500" />
+            AI
           </label>
-          <label className="flex items-center gap-1.5">
-            <input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)}
-              className="h-4 w-4 translate-y-[0.5px] accent-cyan-500" />
-            <span className="text-[13px] leading-none text-slate-300">F</span>
+          <label className="flex items-center gap-2 text-[13px] text-slate-200">
+            <input type="checkbox" checked={useForum} onChange={e=>setUseForum(e.target.checked)} className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-cyan-500" />
+            Forum
           </label>
-          <label className="flex items-center gap-1.5 opacity-50">
-            <input type="checkbox" checked={useAI} disabled
-              className="h-4 w-4 translate-y-[0.5px] accent-cyan-500" />
-            <span className="text-[13px] leading-none text-slate-500">AI</span>
+          <label className="flex items-center gap-2 text-[13px] text-slate-200">
+            <input type="checkbox" checked={useKainoa} onChange={e=>setUseKainoa(e.target.checked)} className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-cyan-500" />
+            Answers
           </label>
         </div>
       </div>
 
       {/* CHAT */}
-      <div ref={msgsRef} className="mb-3 h-[55vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+      <div ref={msgsRef} className="mb-3 h-[52vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
         {messages.map((m,i)=>(
           <div key={i} className={`mb-2.5 flex ${m.role==='user'?'justify-end':'justify-start'}`}>
-            <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[14px] leading-[1.4] ${m.role==='user'?'bg-cyan-900/30 border border-cyan-800/40':'bg-slate-900 border border-slate-800'}`}>
+            <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[14px] leading-snug ${m.role==='user'?'bg-cyan-900/30 border border-cyan-800/40':'bg-slate-900 border border-slate-800'}`}>
               {m.text}
             </div>
           </div>
