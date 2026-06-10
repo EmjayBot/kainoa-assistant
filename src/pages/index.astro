@@ -1,13 +1,15 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import KainoaChat from '../components/KainoaChat.jsx';
-import SiteFooter from '../components/SiteFooter.astro';
 ---
 
-<StarlightPage frontmatter={{ title: 'Kainoa Assistant', description: 'TEP Community Assistant' }}>
-  <div class="-mx-4 sm:mx-0">
+<StarlightPage frontmatter={{ title: 'Kainoa Assistant', template: 'splash' }}>
+  <div class="mx-auto w-full max-w-3xl px-4 py-4">
     <KainoaChat client:load />
   </div>
 </StarlightPage>
 
-<SiteFooter />
+<style is:global>
+  /* Hide the big duplicate title since Starlight nav already shows it */
+  .sl-container > h1 { display: none; }
+</style>
