@@ -15,39 +15,47 @@ export default function KainoaChat() {
 
   useEffect(() => { fetch(`${base}data/responses/index.json`).then(r=>r.json()).then(m=>Promise.all(m.map(f=>fetch(`${base}data/responses/${f}`).then(r=>r.json())))).then(a=>setAnswers(a.flat())).catch(console.error); }, [base]);
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999, behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { const h = e => { if (aiRef.current &&!aiRef.current.contains(e.target)) setAiOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, []);
 
   const findKainoa = (q) => { const ql=q.toLowerCase().trim(); let b=null,s=0; for(const a of answers) for(const k of a.keywords||[]){ const kl=k.toLowerCase(); let sc=0; if(ql===kl)sc=100;else if(ql.includes(kl))sc=80;else if(kl.includes(ql))sc=60; if(sc>s){s=sc;b=a;}} return s>20?b:null; };
 
-  // --- FIXED SEARCH ---
-  const ddgSearch = async (query) => {
-    const sources = [
-      `https://r.jina.ai/http://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
-      `https://r.jina.ai/http://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
-      `https://s.jina.ai/${encodeURIComponent(query)}` // fallback: Jina search summary
-    ];
-    for (const url of sources) {
-      try {
-        const text = await fetch(url, { cache: 'no-store' }).then(r => r.text());
-        const results = [];
-        const re = /\[([^\]]{3,120})\]\((https?:\/\/(?!.*duckduckgo\.com|.*jina\.ai)[^)]+)\)/gi;
-        let m;
-        while ((m = re.exec(text))!== null && results.length < 5) {
-          const title = m[1].replace(/\s+/g, ' ').trim();
-          const link = m[2];
-          if (title.length < 5) continue;
-          results.push(`• [${title}](${link})`);
-        }
-        if (results.length) return results.join('\n');
-      } catch (e) { console.warn('search fail', url, e); }
-    }
-    return null;
+  // --- NEW: Direct Discourse search (CORS must be enabled) ---
+  const searchForum = async (query) => {
+    try {
+      const url = `https://forum.theeastpacific.com/search.json?q=${encodeURIComponent(query)}`;
+      const data = await fetch(url, { cache: 'no-store' }).then(r => r.json());
+      const posts = data.posts?.slice(0, 5) || [];
+      if (!posts.length) return null;
+      return posts.map(p => {
+        const title = (p.topic_title || 'Forum Post').replace(/"/g, '');
+        const link = `https://forum.theeastpacific.com/t/${p.topic_id}/${p.post_number}`;
+        const blurb = (p.blurb || '').replace(/<[^>]+>/g, '').trim().slice(0, 100);
+        return `• [${title}](${link})${blurb? ` — ${blurb}...` : ''}`;
+      }).join('\n');
+    } catch (e) { console.error('Forum:', e); return null; }
+  };
+
+  // --- NEW: Web search via SearXNG, fallback to Jina ---
+  const searchWeb = async (query) => {
+    try {
+      const url = `https://searx.be/search?q=${encodeURIComponent(query)}&format=json&language=en`;
+      const data = await fetch(url).then(r => r.json());
+      const results = data.results?.filter(r => r.url && r.title).slice(0, 5) || [];
+      if (results.length) return results.map(r => `• [${r.title}](${r.url})`).join('\n');
+    } catch (e) { console.warn('SearX fail, trying Jina'); }
+    try {
+      const text = await fetch(`https://r.jina.ai/http://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`).then(r => r.text());
+      const out = []; const re = /\[([^\]]{4,})\]\((https?:\/\/[^)]+)\)/gi; let m;
+      while ((m = re.exec(text)) && out.length < 5) { if (!m[2].includes('duckduckgo')) out.push(`• [${m[1]}](${m[2]})`); }
+      return out.length? out.join('\n') : null;
+    } catch { return null; }
   };
 
   const send = async () => {
     const q = input.trim(); if (!q) return; setInput(''); setMessages(m => [...m, { role: 'user', text: q }]);
     const hit = useKainoa && findKainoa(q); if (hit) { setMessages(m => [...m, { role: 'bot', text: hit.answer, source: 'Kainoa' }]); return; }
-    if (useForum) { setMessages(m => [...m, { role: 'bot', text: 'Searching forum...' }]); const r = await ddgSearch(`${q} site:forum.theeastpacific.com`); setMessages(m => [...m.slice(0,-1), { role: 'bot', text: r? `**Forum Results:**\n\n${r}` : `No forum results for "${q}". Try a broader term.`, source: 'Forum' }]); return; }
-    if (useWeb) { setMessages(m => [...m, { role: 'bot', text: 'Searching web...' }]); const r = await ddgSearch(q); setMessages(m => [...m.slice(0,-1), { role: 'bot', text: r? `**Web Results:**\n\n${r}` : `No web results for "${q}".`, source: 'Web' }]); return; }
+    if (useForum) { setMessages(m => [...m, { role: 'bot', text: 'Searching forum...' }]); const r = await searchForum(q); setMessages(m => [...m.slice(0,-1), { role: 'bot', text: r? `**Forum Results:**\n\n${r}` : `No forum results for "${q}".`, source: 'Forum' }]); return; }
+    if (useWeb) { setMessages(m => [...m, { role: 'bot', text: 'Searching web...' }]); const r = await searchWeb(q); setMessages(m => [...m.slice(0,-1), { role: 'bot', text: r? `**Web Results:**\n\n${r}` : `No web results for "${q}".`, source: 'Web' }]); return; }
     setMessages(m => [...m, { role: 'bot', text: 'Enable Kainoa, Forum, or Web.' }]);
   };
 
@@ -60,8 +68,8 @@ export default function KainoaChat() {
       <div className="mb-4 flex items-center gap-2.5">
         <KLogo size={28} />
         <div className="relative" ref={aiRef}>
-          <button onClick={() => setAiOpen(o =>!o)} className={`${pill} ${model!=='off'?on:off} w-[110px] justify-between`}><span>{models.find(m=>m.id===model)?.label}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-50"><path d="M6 9l6 6 6-6"/></svg></button>
-          {aiOpen && <div className="absolute z-20 mt-1.5 w-[110px] rounded-xl border border-slate-800 bg-[#0c1018] shadow-2xl py-1">{models.map(m=><button key={m.id} onClick={()=>{setModel(m.id);setAiOpen(false);}} className={`w-full text-left px-3 py-1.5 text-[13px] hover:bg-[#161b25] ${model===m.id?'text-white':'text-slate-400'}`}>{m.label}</button>)}</div>}
+          <button onClick={() => setAiOpen(o =>!o)} className={`${pill} ${model!== 'off'? on : off} w-[110px] justify-between`}><span>{models.find(m => m.id === model)?.label}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-50"><path d="M6 9l6 6 6-6"/></svg></button>
+          {aiOpen && <div className="absolute z-20 mt-1.5 w-[110px] rounded-xl border border-slate-800 bg-[#0c1018] shadow-2xl py-1">{models.map(m => <button key={m.id} onClick={() => { setModel(m.id); setAiOpen(false); }} className={`w-full text-left px-3 py-1.5 text-[13px] hover:bg-[#161b25] ${model === m.id? 'text-white' : 'text-slate-400'}`}>{m.label}</button>)}</div>}
         </div>
         {[{k:'k',v:useKainoa,s:setUseKainoa,l:'Kainoa'},{k:'f',v:useForum,s:setUseForum,l:'Forum'},{k:'w',v:useWeb,s:setUseWeb,l:'Web'}].map(p=>(
           <button key={p.k} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off}`}><span className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center transition ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{p.v&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}</span>{p.l}</button>
