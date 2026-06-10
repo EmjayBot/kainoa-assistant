@@ -1,15 +1,21 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import KainoaChat from '../components/KainoaChat.jsx';
+import SiteFooter from '../components/SiteFooter.astro';
 ---
 
-<StarlightPage frontmatter={{ title: 'Kainoa Assistant', template: 'splash' }}>
-  <div class="mx-auto w-full max-w-3xl px-4 py-4">
+<StarlightPage frontmatter={{ title: 'Kainoa Assistant', template: 'splash', pagefind: false }}>
+  <div class="mx-auto w-full max-w-3xl px-4 py-6">
     <KainoaChat client:load />
+  </div>
+
+  <!-- Footer lives inside StarlightPage so splash template doesn't hide it -->
+  <div class="mt-8 border-t border-slate-800/60">
+    <SiteFooter />
   </div>
 </StarlightPage>
 
 <style is:global>
-  /* Hide the big duplicate title since Starlight nav already shows it */
+  /* hide the duplicate H1 since logo is in top bar */
   .sl-container > h1 { display: none; }
 </style>
