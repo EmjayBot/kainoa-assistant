@@ -56,11 +56,15 @@ export default function KainoaChat() {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  const findKainoa = (q) => {
-    const ql = q.toLowerCase();
-    return answers.find(a => a.keywords?.some(k => ql.includes(k.toLowerCase())));
-  };
-
+const findKainoa = (q) => {
+  const ql = q.toLowerCase().trim();
+  return answers.find(a => 
+    a.keywords?.some(k => {
+      const kl = k.toLowerCase();
+      return ql === kl || ql.includes(kl) || kl.includes(ql);
+    })
+  );
+};
   const send = () => {
     const q = input.trim();
     if (!q) return;
