@@ -1,0 +1,10 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import KainoaChat from '../components/KainoaChat.jsx';
+---
+
+<StarlightPage frontmatter={{ title: 'Kainoa', description: 'TEP Community Assistant', template: 'splash' }}>
+  <div class="px-4 py-8">
+    <KainoaChat client:load />
+  </div>
+</StarlightPage>
