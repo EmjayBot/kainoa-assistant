@@ -37,7 +37,8 @@ export default function KainoaChat() {
   ];
   const currentLabel = models.find(m => m.id === model)?.label;
 
-  const pillBase = "h-7 px-2.5 inline-flex items-center gap-1.5 rounded-lg border text-[12px] leading-none select-none";
+  // KEY: flex (not inline-flex) + leading-none = no baseline drift
+  const pillBase = "h-7 px-2.5 flex items-center gap-1.5 rounded-lg border text-[12px] leading-none select-none";
   const pillIdle = "border-slate-700/40 bg-[#141722] text-slate-300 hover:bg-[#1a1f2e]";
   const pillActive = "border-cyan-800/60 bg-[#141722] text-cyan-300";
 
@@ -52,9 +53,8 @@ export default function KainoaChat() {
 
   return (
     <div className="bg-transparent">
-      {/* CONTROLS - stacked to avoid baseline fight */}
+      {/* AI on its own row — no shared baseline */}
       <div className="mb-4 flex flex-col gap-2">
-        {/* Row 1: AI alone */}
         <div className="relative w-full sm:w-[180px]" ref={aiRef}>
           <button
             type="button"
@@ -75,8 +75,8 @@ export default function KainoaChat() {
           )}
         </div>
 
-        {/* Row 2: Forum + Kainoa - identical components, always aligned */}
-        <div className="flex items-center gap-2">
+        {/* Forum + Kainoa — GRID locks both to same track, no baseline math */}
+        <div className="grid grid-cols-[auto_auto] items-center gap-2 w-fit">
           <TogglePill active={useForum} onClick={() => setUseForum(!useForum)}>Forum</TogglePill>
           <TogglePill active={useKainoa} onClick={() => setUseKainoa(!useKainoa)}>Kainoa</TogglePill>
         </div>
