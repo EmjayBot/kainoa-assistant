@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 
 export default defineConfig({
-  site: 'https://emjaybot.github.io',
+  site: 'https://kainoa.emjay.fyi',
   base: '/kainoa-assistant/',
   integrations: [
     react(),
