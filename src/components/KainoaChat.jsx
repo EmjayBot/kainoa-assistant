@@ -21,10 +21,10 @@ export default function KainoaChat() {
 
   useEffect(() => {
     fetch(`${base}data/responses/index.json`)
-     .then(r => r.json())
-     .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
-     .then(a => setAnswers(a.flat()))
-     .catch(console.error);
+    .then(r => r.json())
+    .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
+    .then(a => setAnswers(a.flat()))
+    .catch(console.error);
   }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999, behavior: 'smooth' }); }, [messages]);
@@ -41,36 +41,41 @@ export default function KainoaChat() {
     return score > 20? best : null;
   };
 
-  // --- WORKING WEB SEARCH (no API key, no CORS) ---
+  // --- INDEPENDENT WEB SEARCH (Mojeek, Brave, SearXNG, Qwant) ---
   const searchWeb = async (query) => {
     const sources = [
-      `https://searx.be/search?q=${encodeURIComponent(query)}&format=json`,
-      `https://r.jina.ai/http://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
-      `https://r.jina.ai/http://www.bing.com/search?q=${encodeURIComponent(query)}`
+      `https://searx.be/search?q=${encodeURIComponent(query)}&format=json&engines=mojeek,brave,qwant`,
+      `https://search.sapti.me/search?q=${encodeURIComponent(query)}&format=json&engines=mojeek,brave`,
+      `https://searx.tiekoetter.com/search?q=${encodeURIComponent(query)}&format=json`,
+      `https://r.jina.ai/http://www.mojeek.com/search?q=${encodeURIComponent(query)}`,
+      `https://r.jina.ai/http://search.brave.com/search?q=${encodeURIComponent(query)}`,
+      `https://r.jina.ai/http://lite.qwant.com/?q=${encodeURIComponent(query)}`
     ];
 
     for (const url of sources) {
       try {
-        const isJson = url.includes('searx');
+        const isJson = url.includes('format=json');
         const data = await fetch(url, { cache: 'no-store' }).then(r => isJson? r.json() : r.text());
 
         if (isJson && data.results?.length) {
-          return data.results.slice(0,5).map(r => `• [${r.title}](${r.url})`).join('\n');
+          const clean = data.results.filter(r => r.url &&!r.url.includes('searx')).slice(0,5);
+          if (clean.length) return clean.map(r => `• [${r.title}](${r.url})`).join('\n');
         }
 
         if (!isJson) {
-          const results = [];
-          const re = /\[([^\]]{5,120})\]\((https?:\/\/[^)\s]+)\)/gi;
+          const results = []; const seen = new Set();
+          const re = /\[([^\]]{5,150})\]\((https?:\/\/(?!.*(?:brave|qwant|mojeek)\.com\/search|jina\.ai)[^)\s]+)\)/gi;
           let m;
           while ((m = re.exec(data)) && results.length < 5) {
+            const title = m[1].replace(/\s+/g,' ').trim();
             const link = m[2];
-            if (!link.includes('duckduckgo.com') &&!link.includes('bing.com/search') &&!link.includes('jina.ai')) {
-              results.push(`• [${m[1].trim()}](${link})`);
-            }
+            if (seen.has(link) || title.length < 8) continue;
+            seen.add(link);
+            results.push(`• [${title}](${link})`);
           }
           if (results.length) return results.join('\n');
         }
-      } catch (e) { console.warn('search fail:', e); }
+      } catch (e) { console.warn('search fail:', url.split('/')[2]); }
     }
     return null;
   };
