@@ -2,57 +2,85 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 ---
 
-<StarlightPage frontmatter={{ title: 'Forum Search', description: 'Search forum.theeastpacific.com' }}>
-  <div class="max-w-3xl mx-auto">
-    <div class="flex gap-2 mb-4">
-      <input id="q" placeholder="Search citizenship, magisterium..." class="flex-1 h-11 rounded-xl bg-[#11151f] border border-slate-700 px-4 text-white outline-none" />
-      <button id="go" class="h-11 px-5 rounded-xl bg-sky-600 text-white font-bold">Search</button>
-    </div>
-    <div id="out" class="space-y-3 text-slate-300">Type a term above.</div>
-  </div>
+<StarlightPage frontmatter={{ title: 'Forum Search' }}>
+  <div class="max-w-3xl mx-auto py-6">
+    <form id="searchForm" class="flex gap-2 mb-6" onsubmit="return false;">
+      <input
+        id="q"
+        type="text"
+        inputmode="search"
+        placeholder="Type citizenship, magisterium..."
+        class="flex-1 h-12 rounded-xl bg-[#0f172a] border-2 border-slate-700 px-4 text-white text-base outline-none focus:border-sky-500"
+        autocomplete="off"
+        autofocus
+      />
+      <button
+        id="go"
+        type="button"
+        class="h-12 px-6 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold"
+      >Search</button>
+    </form>
 
-  <script>
+    <div id="out" class="min-h-[200px] text-slate-400">
+      Start typing above and press Enter.
+    </div>
+  </div>
+</StarlightPage>
+
+<script is:inline>
+  // Wait for DOM
+  document.addEventListener('DOMContentLoaded', () => {
     const FORUM = 'https://forum.theeastpacific.com';
-    const out = document.getElementById('out');
     const q = document.getElementById('q');
     const go = document.getElementById('go');
+    const out = document.getElementById('out');
 
-    async function search(term) {
-      if (!term) return;
-      out.innerHTML = '<div class="text-slate-500">Searching...</div>';
-      
-      const urls = [
-        `https://r.jina.ai/http://forum.theeastpacific.com/search.json?q=${encodeURIComponent(term)}`,
-        `https://api.allorigins.win/get?url=${encodeURIComponent(FORUM + '/search.json?q=' + encodeURIComponent(term))}`
-      ];
+    // Make sure input is focusable
+    q.removeAttribute('disabled');
+    q.style.pointerEvents = 'auto';
 
-      for (const url of urls) {
-        try {
-          const r = await fetch(url, { cache: 'no-store' });
-          let txt = await r.text();
-          let data = JSON.parse(txt);
-          if (data.contents) data = JSON.parse(data.contents);
-          
-          const topics = data.topics || [];
-          if (topics.length) {
-            out.innerHTML = topics.slice(0,10).map(t => `
-              <a href="${FORUM}/t/${t.slug}/${t.id}" target="_blank" class="block p-4 rounded-xl bg-[#11151f] border border-slate-800 hover:border-sky-700">
-                <div class="text-white font-medium">${t.title}</div>
-                <div class="text-xs text-slate-400 mt-1">${(t.excerpt||'').replace(/<[^>]*>/g,'')}</div>
-              </a>
-            `).join('');
-            return;
-          }
-        } catch(e) { continue; }
+    async function doSearch() {
+      const term = q.value.trim();
+      if (!term) { q.focus(); return; }
+
+      out.innerHTML = '<div class="text-slate-500 animate-pulse">Searching forum...</div>';
+      go.disabled = true;
+
+      try {
+        const url = `https://r.jina.ai/http://forum.theeastpacific.com/search.json?q=${encodeURIComponent(term)}`;
+        const r = await fetch(url);
+        const data = await r.json();
+        const topics = data.topics || [];
+
+        if (topics.length === 0) {
+          out.innerHTML = `<div class="text-amber-400">No results for "${term}"</div>`;
+          return;
+        }
+
+        out.innerHTML = topics.slice(0,10).map(t => `
+          <a href="${FORUM}/t/${t.slug}/${t.id}" target="_blank"
+             class="block mb-3 p-4 rounded-xl bg-[#11151f] border border-slate-800 hover:border-sky-600 transition">
+            <div class="text-white font-medium">${t.title}</div>
+            <div class="text-sm text-slate-400 mt-1">${(t.excerpt||'').replace(/<[^>]*>/g,'').substring(0,150)}...</div>
+          </a>
+        `).join('');
+      } catch (e) {
+        out.innerHTML = '<div class="text-red-400">Search failed. Try again.</div>';
+        console.error(e);
+      } finally {
+        go.disabled = false;
       }
-      out.innerHTML = '<div class="text-amber-400">No results — try "citizenship" or "Magisterium"</div>';
     }
 
-    go.onclick = () => search(q.value);
-    q.onkeydown = e => e.key === 'Enter' && search(q.value);
-    
-    // auto-search if ?q= in URL
-    const params = new URLSearchParams(location.search);
-    if (params.get('q')) { q.value = params.get('q'); search(q.value); }
-  </script>
-</StarlightPage>
+    go.addEventListener('click', doSearch);
+    q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); }});
+
+    // Auto-focus and make sure it's editable
+    setTimeout(() => { q.focus(); q.select(); }, 100);
+  });
+</script>
+
+<style>
+  /* Ensure input is always interactive */
+  #q { pointer-events: auto!important; user-select: text!important; }
+</style>
