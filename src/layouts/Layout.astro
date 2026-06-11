@@ -1,20 +1,4 @@
----
-// src/layouts/Layout.astro
----
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Kainoa</title>
-
-    <!-- ADD THESE 3 LINES -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geom&family=Lexend:wght@400;500&display=swap" rel="stylesheet">
-
-    <!-- your existing styles -->
-  </head>
-  <body>
-    <slot />
-  </body>
-</html>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500&display=swap');
+</style>
