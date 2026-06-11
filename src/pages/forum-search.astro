@@ -1,0 +1,7 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ForumSearch from '../components/ForumSearch';
+---
+<StarlightPage frontmatter={{ title: 'Forum Search', description: 'Direct TEP forum search' }}>
+  <ForumSearch client:load />
+</StarlightPage>
