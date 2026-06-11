@@ -9,11 +9,14 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-  title: 'Kainoa',
-  logo: {
-    src: './src/assets/k-logo.svg',
-    replacesTitle: false, // keeps "Kainoa Assistant" text next to the K
-  },
+      title: 'Kainoa',
+      logo: {
+        src: './src/assets/k-logo.svg',
+        replacesTitle: false,
+      },
+      customCss: [
+        './src/styles/custom.css',  // ← ADD THIS
+      ],
       social: {
         github: 'https://github.com/EmjayBot/kainoa-assistant',
       },
