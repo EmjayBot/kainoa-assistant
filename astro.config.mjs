@@ -9,7 +9,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-  title: 'Kainoa Assistant',
+  title: 'Kainoa',
   logo: {
     src: './src/assets/k-logo.svg',
     replacesTitle: false, // keeps "Kainoa Assistant" text next to the K
