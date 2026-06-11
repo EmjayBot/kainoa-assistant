@@ -2,5 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
-body { @apply bg-[#030712] text-slate-200; }
+@import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500&display=swap');
+
+:root { 
+  color-scheme: dark; 
+}
+
+body { 
+  @apply bg-[#030712] text-slate-200; 
+  font-family: 'Lexend', sans-serif;
+  font-weight: 400;
+}
+
+/* === FORCE GEOM BLACK ON HEADER & FOOTER === */
+header .site-title,
+header [data-site-title],
+header a[href="/"] span,
+.sl-site-title,
+.site-title-text,
+h1.site-title {
+  font-family: 'Geom', sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Header "Kainoa" text - matches your screenshot blue */
+header .site-title,
+header nav a:first-child {
+  color: #93c5fd !important;
+  font-size: 20px !important;
+}
+
+/* === FIX SQUISHED K LOGO === */
+header img,
+header .logo,
+header [alt="K"],
+.site-logo,
+footer img,
+footer [alt="K"] {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  object-fit: contain !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+}
+
+/* Footer headings - THE EAST PACIFIC, URTH, VALSORA */
+footer h2,
+footer h3,
+footer .footer-heading,
+footer [class*="title"] {
+  font-family: 'Geom', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 1.375rem !important; /* 22px */
+  letter-spacing: 0.02em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase;
+}
+
+/* Footer "Kainoa" */
+footer .site-title,
+footer a[href="/"] {
+  font-family: 'Geom', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 28px !important;
+  color: white !important;
+}
+
+/* Make sure the K in footer isn't stretched */
+footer .flex.items-center img,
+footer div:first-child img {
+  flex-shrink: 0 !important;
+}
