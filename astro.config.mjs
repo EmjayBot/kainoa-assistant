@@ -5,7 +5,7 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   site: 'https://kainoa.emjay.fyi',
-  base: '/kainoa-assistant/',
+  base: '/',
   integrations: [
     react(),
     starlight({
