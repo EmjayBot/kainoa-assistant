@@ -3,84 +3,58 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 ---
 
 <StarlightPage frontmatter={{ title: 'Forum Search' }}>
-  <div class="max-w-3xl mx-auto py-6">
-    <form id="searchForm" class="flex gap-2 mb-6" onsubmit="return false;">
-      <input
-        id="q"
-        type="text"
-        inputmode="search"
-        placeholder="Type citizenship, magisterium..."
-        class="flex-1 h-12 rounded-xl bg-[#0f172a] border-2 border-slate-700 px-4 text-white text-base outline-none focus:border-sky-500"
-        autocomplete="off"
-        autofocus
-      />
-      <button
-        id="go"
-        type="button"
-        class="h-12 px-6 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold"
-      >Search</button>
-    </form>
-
-    <div id="out" class="min-h-[200px] text-slate-400">
-      Start typing above and press Enter.
+  <div class="max-w-3xl mx-auto">
+    <div class="flex gap-2 mb-4">
+      <input id="q" type="text" placeholder="citizenship, magisterium..."
+        class="flex-1 h-12 px-4 rounded-xl bg-[#0f172a] border-2 border-slate-700 text-white focus:border-sky-500 outline-none" 
+        autocomplete="off" autofocus />
+      <button id="go" class="h-12 px-6 bg-sky-600 rounded-xl text-white font-bold">Search</button>
     </div>
+    <div id="out" class="space-y-3"></div>
   </div>
 </StarlightPage>
 
 <script is:inline>
-  // Wait for DOM
-  document.addEventListener('DOMContentLoaded', () => {
-    const FORUM = 'https://forum.theeastpacific.com';
-    const q = document.getElementById('q');
-    const go = document.getElementById('go');
-    const out = document.getElementById('out');
+  const FORUM = 'https://forum.theeastpacific.com';
+  const q = document.getElementById('q');
+  const go = document.getElementById('go');
+  const out = document.getElementById('out');
 
-    // Make sure input is focusable
-    q.removeAttribute('disabled');
-    q.style.pointerEvents = 'auto';
+  async function search() {
+    const term = q.value.trim();
+    if (!term) return;
+    out.innerHTML = '<div class="text-slate-500">Searching...</div>';
+    
+    try {
+      // DIRECT fetch — no proxy, CORS is whitelisted
+      const res = await fetch(`${FORUM}/search.json?q=${encodeURIComponent(term)}`, {
+        method: 'GET',
+        credentials: 'omit',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      const topics = data.topics || [];
 
-    async function doSearch() {
-      const term = q.value.trim();
-      if (!term) { q.focus(); return; }
-
-      out.innerHTML = '<div class="text-slate-500 animate-pulse">Searching forum...</div>';
-      go.disabled = true;
-
-      try {
-        const url = `https://r.jina.ai/http://forum.theeastpacific.com/search.json?q=${encodeURIComponent(term)}`;
-        const r = await fetch(url);
-        const data = await r.json();
-        const topics = data.topics || [];
-
-        if (topics.length === 0) {
-          out.innerHTML = `<div class="text-amber-400">No results for "${term}"</div>`;
-          return;
-        }
-
-        out.innerHTML = topics.slice(0,10).map(t => `
-          <a href="${FORUM}/t/${t.slug}/${t.id}" target="_blank"
-             class="block mb-3 p-4 rounded-xl bg-[#11151f] border border-slate-800 hover:border-sky-600 transition">
-            <div class="text-white font-medium">${t.title}</div>
-            <div class="text-sm text-slate-400 mt-1">${(t.excerpt||'').replace(/<[^>]*>/g,'').substring(0,150)}...</div>
-          </a>
-        `).join('');
-      } catch (e) {
-        out.innerHTML = '<div class="text-red-400">Search failed. Try again.</div>';
-        console.error(e);
-      } finally {
-        go.disabled = false;
+      if (!topics.length) {
+        out.innerHTML = `<div class="text-amber-400">No results for "${term}"</div>`;
+        return;
       }
+
+      out.innerHTML = topics.slice(0,10).map(t => `
+        <a href="${FORUM}/t/${t.slug}/${t.id}" target="_blank"
+           class="block p-4 rounded-xl bg-[#11151f] border border-slate-800 hover:border-sky-600">
+          <div class="text-white font-medium">${t.title}</div>
+          <div class="text-xs text-slate-400 mt-1">${(t.excerpt||'').replace(/<[^>]*>/g,'')}</div>
+        </a>
+      `).join('');
+    } catch (e) {
+      out.innerHTML = `<div class="text-red-400">Direct fetch failed: ${e.message}. Check Discourse CORS settings for your Pages domain.</div>`;
+      console.error(e);
     }
+  }
 
-    go.addEventListener('click', doSearch);
-    q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); }});
-
-    // Auto-focus and make sure it's editable
-    setTimeout(() => { q.focus(); q.select(); }, 100);
-  });
+  go.onclick = search;
+  q.onkeydown = e => e.key === 'Enter' && search();
 </script>
-
-<style>
-  /* Ensure input is always interactive */
-  #q { pointer-events: auto!important; user-select: text!important; }
-</style>
