@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-const KLogo = ({ size = 28 }) => (
-  <div className="shrink-0 flex items-center justify-center rounded- bg-gradient-to-br from-[#38bdf8] to-[#2563eb]" style={{ width: size, height: size }}>
-    <span style={{ fontFamily: "'Geom', sans-serif", fontWeight: 800, fontSize: size * 0.6, color: 'white' }}>K</span>
-  </div>
-);
-
 const FORUM = 'https://forum.theeastpacific.com';
 
 export default function KainoaChat() {
@@ -53,12 +47,7 @@ export default function KainoaChat() {
         url: `${FORUM}/t/${t.slug}/${t.id}`,
         excerpt: (t.excerpt || '').replace(/<[^>]*>/g, '')
       }));
-    } catch (e) {
-      console.error('forum timeout', e);
-      return [];
-    } finally {
-      clearTimeout(timeout);
-    }
+    } catch { return []; } finally { clearTimeout(timeout); }
   };
 
   const send = async () => {
@@ -76,22 +65,15 @@ export default function KainoaChat() {
       setIsSearching(true);
       const searchId = Date.now();
       setMessages(m => [...m, { role: 'bot', text: 'Searching forum...', source: 'FORUM', id: searchId }]);
-      
       const results = await searchForum(q);
-      
       setMessages(m => m.filter(msg => msg.id !== searchId));
       setIsSearching(false);
-
       if (results.length) {
-        const html = results.map(r => 
-          `<div style="margin-bottom:10px"><a href="${r.url}" target="_blank" style="color:#38bdf8">${r.title}</a><div style="color:#94a3b8;font-size:12px">${r.excerpt}</div></div>`
-        ).join('');
-        setMessages(m => [...m, { role: 'bot', text: html, source: 'FORUM' }]);
-        return;
+        const html = results.map(r => `<div style="margin-bottom:10px"><a href="${r.url}" target="_blank" style="color:#38bdf8">${r.title}</a><div style="color:#94a3b8;font-size:12px">${r.excerpt}</div></div>`).join('');
+        setMessages(m => [...m, { role: 'bot', text: html, source: 'FORUM' }]); return;
       }
     }
-
-    setMessages(m => [...m, { role: 'bot', text: 'No forum results. Try "citizenship" or "Magisterium".', source: 'KAINOA' }]);
+    setMessages(m => [...m, { role: 'bot', text: 'No results.', source: 'KAINOA' }]);
   };
 
   const models = [{id:'off',label:'AI: OFF'},{id:'phi',label:'AI: PHI-3.5'},{id:'llama',label:'AI: LLAMA 3.2'}];
@@ -101,7 +83,9 @@ export default function KainoaChat() {
   return (
     <div style={{fontFamily:"'Lexend', sans-serif"}}>
       <div className="mb-4 flex items-center gap-2.5">
-        <KLogo size={28}/>
+        {/* BLANK SPACE WHERE K LOGO WAS */}
+        <div style={{ width: 28, height: 28 }} />
+        
         <div className="relative">
           <button onClick={()=>setAiOpen(o=>!o)} className={`${pill} ${model!=='off'?on:off} w-[120px] justify-between`} style={{fontFamily:"'Geom', sans-serif", fontWeight:800}}>
             <span>{models.find(m=>m.id===model)?.label}</span>
