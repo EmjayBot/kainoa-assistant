@@ -15,7 +15,31 @@ export default defineConfig({
         replacesTitle: false,
       },
       customCss: [
-        './src/styles/custom.css',  // ← ADD THIS
+        './src/styles/custom.css',
+      ],
+      head: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.googleapis.com',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.gstatic.com',
+            crossorigin: true,
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'stylesheet',
+            href: 'https://fonts.googleapis.com/css2?family=Geom:wght@300..900&family=Lexend:wght@400;500&display=swap',
+          },
+        },
       ],
       social: {
         github: 'https://github.com/EmjayBot/kainoa-assistant',
