@@ -28,10 +28,10 @@ export default function KainoaChat() {
 
   useEffect(() => {
     fetch(`${base}data/responses/index.json`)
-  .then(r => r.json())
-  .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
-  .then(a => setAnswers(a.flat()))
-  .catch(console.error);
+ .then(r => r.json())
+ .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
+ .then(a => setAnswers(a.flat()))
+ .catch(console.error);
   }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999, behavior: 'smooth' }); }, [messages]);
@@ -81,13 +81,13 @@ export default function KainoaChat() {
     const q=input.trim(); if(!q) return;
     setInput(''); setMessages(m=>[...m,{role:'user',text:q}]);
     const hit=useKainoa&&findKainoa(q);
-    if(hit){setMessages(m=>[...m,{role:'bot',text:hit.answer,source:'Kainoa'}]);return;}
-    if(useForum){setMessages(m=>[...m,{role:'bot',text:'Searching forum...'}]);const r=await searchForum(q);setMessages(m=>[...m.slice(0,-1),{role:'bot',text:r?`**Forum Results:**\n\n${r}`:`No forum results.`,source:'Forum'}]);return;}
-    if(useWeb){setMessages(m=>[...m,{role:'bot',text:'Searching web...'}]);const r=await searchWeb(q);setMessages(m=>[...m.slice(0,-1),{role:'bot',text:r?`**Web Results:**\n\n${r}`:`No web results.`,source:'Web'}]);return;}
+    if(hit){setMessages(m=>[...m,{role:'bot',text:hit.answer,source:'KAINOA'}]);return;}
+    if(useForum){setMessages(m=>[...m,{role:'bot',text:'Searching forum...'}]);const r=await searchForum(q);setMessages(m=>[...m.slice(0,-1),{role:'bot',text:r?`**Forum Results:**\n\n${r}`:`No forum results.`,source:'FORUM'}]);return;}
+    if(useWeb){setMessages(m=>[...m,{role:'bot',text:'Searching web...'}]);const r=await searchWeb(q);setMessages(m=>[...m.slice(0,-1),{role:'bot',text:r?`**Web Results:**\n\n${r}`:`No web results.`,source:'WEB'}]);return;}
   };
 
-  const models=[{id:'off',label:'AI: Off'},{id:'phi',label:'AI: Phi-3.5'},{id:'llama',label:'AI: Llama 3.2'}];
-  const pill="h-8 px-3 flex items-center gap-2 rounded-xl border text-[13px] select-none cursor-pointer transition";
+  const models=[{id:'off',label:'AI: OFF'},{id:'phi',label:'AI: PHI-3.5'},{id:'llama',label:'AI: LLAMA 3.2'}];
+  const pill="h-8 px-3 flex items-center gap-2 rounded-xl border text-[12px] select-none cursor-pointer transition";
   const on="border-slate-700 bg-[#1a1f2b] text-slate-200"; const off="border-slate-800 bg-[#11151f] text-slate-400 hover:bg-[#171c27]";
 
   return (
@@ -95,14 +95,17 @@ export default function KainoaChat() {
       <div className="mb-4 flex items-center gap-2.5">
         <KLogo size={28}/>
         <div className="relative" ref={aiRef}>
-          <button onClick={()=>setAiOpen(o=>!o)} className={`${pill} ${model!=='off'?on:off} w-[110px] justify-between`} style={{fontWeight:500}}>
+          <button onClick={()=>setAiOpen(o=>!o)} className={`${pill} ${model!=='off'?on:off} w-[120px] justify-between`} style={{fontFamily:"'Geom', sans-serif", fontWeight:700, letterSpacing:'0.02em'}}>
             <span>{models.find(m=>m.id===model)?.label}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-50"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          {aiOpen&&<div className="absolute z-20 mt-1.5 w-[110px] rounded-xl border border-slate-800 bg-[#0c1018] shadow-2xl py-1">{models.map(m=><button key={m.id} onClick={()=>{setModel(m.id);setAiOpen(false);}} className={`w-full text-left px-3 py-1.5 text-[13px] hover:bg-[#161b25] ${model===m.id?'text-white':'text-slate-400'}`} style={{fontWeight:400}}>{m.label}</button>)}</div>}
+          {aiOpen&&<div className="absolute z-20 mt-1.5 w-[130px] rounded-xl border border-slate-800 bg-[#0c1018] shadow-2xl py-1" style={{fontFamily:"'Geom', sans-serif"}}>{models.map(m=><button key={m.id} onClick={()=>{setModel(m.id);setAiOpen(false);}} className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#161b25] ${model===m.id?'text-white':'text-slate-400'}`} style={{fontWeight:700, letterSpacing:'0.02em'}}>{m.label}</button>)}</div>}
         </div>
-        {[{k:'k',v:useKainoa,s:setUseKainoa,l:'Kainoa'},{k:'f',v:useForum,s:setUseForum,l:'Forum'},{k:'w',v:useWeb,s:setUseWeb,l:'Web'}].map(p=>(
-          <button key={p.k} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off}`} style={{fontWeight:500}}><span className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{p.v&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}</span>{p.l}</button>
+        {[{k:'k',v:useKainoa,s:setUseKainoa,l:'KAINOA'},{k:'f',v:useForum,s:setUseForum,l:'FORUM'},{k:'w',v:useWeb,s:setUseWeb,l:'WEB'}].map(p=>(
+          <button key={p.k} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off}`} style={{fontFamily:"'Geom', sans-serif", fontWeight:700, letterSpacing:'0.02em'}}>
+            <span className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{p.v&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><path d="M5 13l4 4 10-10"/></svg>}</span>
+            {p.l}
+          </button>
         ))}
       </div>
 
@@ -119,7 +122,7 @@ export default function KainoaChat() {
 
       <div className="relative">
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about TEP..." className="w-full h-[48px] rounded-2xl border border-slate-800 bg-[#11151f] pl-4 pr-24 text-[14px] text-white placeholder-slate-500 outline-none focus:border-sky-900/50 focus:ring-1 focus:ring-sky-900/50" style={{fontWeight:400}}/>
-        <button onClick={send} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-[36px] px-4 rounded-xl bg-sky-600 text-white hover:bg-sky-500" style={{fontWeight:500,fontSize:'14px'}}>Send</button>
+        <button onClick={send} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-[36px] px-4 rounded-xl bg-sky-600 text-white hover:bg-sky-500" style={{fontFamily:"'Geom', sans-serif", fontWeight:700, fontSize:'12px', letterSpacing:'0.04em'}}>SEND</button>
       </div>
     </div>
   );
