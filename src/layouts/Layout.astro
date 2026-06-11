@@ -1,4 +1,81 @@
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500&display=swap');
-</style>
+---
+// src/layouts/Layout.astro
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = "Kainoa — TEP Assistant", description = "Citizenship helper for The East Pacific" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geom:ital,wght@0,300..900;1,300..900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500&display=swap');
+
+      :root {
+        --bg: #0b0f16;
+        --fg: #e5e7eb;
+      }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Lexend', sans-serif;
+        font-weight: 400;
+      }
+
+      /* Site header uses Geom Black */
+      header.site-header,
+     .site-title,
+      nav a {
+        font-family: 'Geom', sans-serif;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      a { color: inherit; text-decoration: none; }
+      a:hover { opacity: 0.8; }
+    </style>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <!-- SITE HEADER -->
+    <header class="site-header sticky top-0 z-40 border-b border-slate-800/60 bg-[#0b0f16]/80 backdrop-blur">
+      <div class="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
+        <a href="/" class="site-title flex items-center gap-2.5">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 text-white" style="font-family: 'Geom', sans-serif; font-weight: 800; font-size: 16px; line-height: 1;">K</span>
+          <span class="text-">KAINOA</span>
+        </a>
+        <nav class="flex items-center gap-6 text-">
+          <a href="/">Home</a>
+          <a href="/kainoa">Chat</a>
+          <a href="https://forum.theeastpacific.com" target="_blank" rel="noopener">Forum</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/60 py-6 text-center text- text-slate-500" style="font-family: 'Lexend', sans-serif;">
+      © {new Date().getFullYear()} The East Pacific — Kainoa Assistant
+    </footer>
+  </body>
+</html>
