@@ -5,23 +5,21 @@ const FORUM = 'https://forum.theeastpacific.com';
 export default function KainoaChat() {
   const [answers, setAnswers] = useState([]);
   const [messages, setMessages] = useState([
-    { role: 'bot', text: "Aloha! I'm Kainoa — ask about citizenship, the Magisterium, or toggle Forum for live results." }
+    { role: 'bot', text: "Aloha! I'm Kainoa — toggle Forum for live Discourse search." }
   ]);
   const [input, setInput] = useState('');
-  const [model, setModel] = useState('off');
   const [useKainoa, setUseKainoa] = useState(true);
   const [useForum, setUseForum] = useState(false);
-  const [useWeb, setUseWeb] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const msgsRef = useRef(null);
   const base = import.meta.env.BASE_URL;
 
   useEffect(() => {
     fetch(`${base}data/responses/index.json`)
-    .then(r => r.json())
-    .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
-    .then(a => setAnswers(a.flat()))
-    .catch(() => setAnswers([]));
+     .then(r => r.json())
+     .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
+     .then(a => setAnswers(a.flat()))
+     .catch(() => {});
   }, [base]);
 
   useEffect(() => {
@@ -44,26 +42,27 @@ export default function KainoaChat() {
     return score > 20? best : null;
   };
 
-  const searchForum = async (q) => {
-    try {
-      const res = await fetch(`${FORUM}/search.json?q=${encodeURIComponent(q)}`, {
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors'
-      });
-      if (!res.ok) {
-        return { error: `HTTP ${res.status} - add ${window.location.origin} to Discourse CORS` };
-      }
-      const data = await res.json();
-      const topics = data.topics || [];
-      if (!topics.length) return { empty: true };
-      return topics.slice(0,5).map(t => ({
-        title: t.title,
-        url: `${FORUM}/t/${t.slug}/${t.id}`,
-        excerpt: (t.excerpt || '').replace(/<[^>]*>/g, '')
-      }));
-    } catch (err) {
-      return { error: err.message };
-    }
+  // JSONP - bypasses CORS, works on kainoa.emjay.fyi
+  const searchForum = (q) => {
+    return new Promise((resolve) => {
+      const cb = `kainoa_${Date.now()}`;
+      window[cb] = (data) => {
+        delete window[cb];
+        document.getElementById(cb)?.remove();
+        const topics = (data.topics || []).slice(0, 5).map(t => ({
+          title: t.title,
+          url: `${FORUM}/t/${t.slug}/${t.id}`,
+          excerpt: (t.excerpt || '').replace(/<[^>]*>/g, '')
+        }));
+        resolve(topics);
+      };
+      const script = document.createElement('script');
+      script.id = cb;
+      script.src = `${FORUM}/search.json?q=${encodeURIComponent(q)}&callback=${cb}`;
+      script.onerror = () => resolve([]);
+      document.body.appendChild(script);
+      setTimeout(() => { if (window[cb]) { delete window[cb]; script.remove(); resolve([]); } }, 8000);
+    });
   };
 
   const send = async () => {
@@ -86,55 +85,47 @@ export default function KainoaChat() {
       setMessages(m => [...m, { role: 'bot', text: `Searching forum for "${q}"...`, source: 'Forum' }]);
       const results = await searchForum(q);
       setIsSearching(false);
-      setMessages(m => m.slice(0, -1)); // remove searching message
+      setMessages(m => m.slice(0, -1));
 
-      if (results.error) {
-        setMessages(m => [...m, { role: 'bot', text: `Search failed: ${results.error}`, source: 'Forum' }]);
-        return;
-      }
-      if (results.empty) {
-        setMessages(m => [...m, { role: 'bot', text: `No topics found for "${q}"`, source: 'Forum' }]);
+      if (!results.length) {
+        setMessages(m => [...m, { role: 'bot', text: `No forum results for "${q}"`, source: 'Forum' }]);
         return;
       }
       const html = results.map(r => `
-        <div class="mb-4">
-          <a href="${r.url}" target="_blank" class="text-sky-400 hover:text-sky-300 font-medium">${r.title}</a>
-          <div class="text-slate-400 text-sm mt-1.5 leading-relaxed">${r.excerpt}</div>
+        <div style="margin-bottom:16px">
+          <a href="${r.url}" target="_blank" style="color:#38bdf8;text-decoration:none;font-weight:500">${r.title}</a>
+          <div style="color:#94a3b8;font-size:13px;margin-top:6px;line-height:1.5">${r.excerpt}</div>
         </div>
       `).join('');
       setMessages(m => [...m, { role: 'bot', text: html, source: 'Forum' }]);
       return;
     }
 
-    setMessages(m => [...m, { role: 'bot', text: 'Turn on Kainoa or Forum to search.', source: 'Kainoa' }]);
+    setMessages(m => [...m, { role: 'bot', text: 'Turn on Kainoa or Forum.', source: 'Kainoa' }]);
   };
 
-  const models = [{id:'off',label:'AI: OFF'},{id:'phi',label:'AI: PHI-3.5'},{id:'llama',label:'AI: LLAMA 3.2'}];
-  const pill = "h-9 px-4 flex items-center gap-2 rounded-xl border text-sm transition";
+  const pill = "h-9 px-4 flex items-center gap-2 rounded-xl border text-sm font-medium";
   const on = "border-slate-600 bg-[#1e2533] text-slate-100";
   const off = "border-slate-800 bg-[#11151f] text-slate-400";
 
   return (
-    <div style={{fontFamily:"'Lexend', sans-serif"}} className="text-[15px]">
-      <div className="mb-6 flex gap-2.5 flex-wrap">
-        <div style={{width:28,height:28}}/>
-        <button className={`${pill} ${model!=='off'?on:off} w-[130px] justify-between font-medium`}>
-          <span>{models.find(m=>m.id===model)?.label}</span>
+    <div style={{fontFamily:"'Lexend',sans-serif"}}>
+      <div className="mb-6 flex gap-2.5">
+        <button onClick={()=>setUseKainoa(!useKainoa)} className={`${pill} ${useKainoa?on:off}`}>
+          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${useKainoa?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{useKainoa&&'✓'}</span>
+          Kainoa
         </button>
-        {[{v:useKainoa,s:setUseKainoa,l:'Kainoa'},{v:useForum,s:setUseForum,l:'Forum'},{v:useWeb,s:setUseWeb,l:'Web'}].map(p=>(
-          <button key={p.l} disabled={isSearching} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off} font-medium`}>
-            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>
-              {p.v&&'✓'}
-            </span>{p.l}
-          </button>
-        ))}
+        <button onClick={()=>setUseForum(!useForum)} className={`${pill} ${useForum?on:off}`}>
+          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${useForum?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{useForum&&'✓'}</span>
+          Forum
+        </button>
       </div>
 
       <div ref={msgsRef} className="mb-5 space-y-5 max-h-[65vh] overflow-y-auto pr-2">
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
             <div className={`max-w-[88%] rounded-2xl border px-5 py-4 ${m.role==='user'?'bg-[#1a2333] border-slate-700':'bg-[#11151f] border-slate-800'}`}>
-              {m.source&&<div className="mb-2 text-[11px] uppercase tracking-wider text-slate-500 font-medium">{m.source}</div>}
+              {m.source&&<div className="mb-2 text-[11px] uppercase tracking-wider text-slate-500">{m.source}</div>}
               <div className="text-slate-200 leading-relaxed" dangerouslySetInnerHTML={{__html:m.text}}/>
             </div>
           </div>
@@ -143,7 +134,7 @@ export default function KainoaChat() {
 
       <div className="relative">
         <input value={input} disabled={isSearching} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder={isSearching?"Searching...":"Ask about TEP..."} className="w-full h-12 rounded-2xl border border-slate-700 bg-[#0f141f] pl-5 pr-28 text-white outline-none focus:border-sky-600"/>
-        <button onClick={send} disabled={isSearching} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 rounded-xl bg-sky-600 text-white font-medium text-sm">Send</button>
+        <button onClick={send} disabled={isSearching} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 rounded-xl bg-sky-600 text-white text-sm">Send</button>
       </div>
     </div>
   );
