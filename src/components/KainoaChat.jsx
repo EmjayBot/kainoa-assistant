@@ -7,26 +7,28 @@ const KLogo = ({ size = 28 }) => (
 );
 
 const FORUM = 'https://forum.theeastpacific.com';
-const PROXY = 'https://api.allorigins.win/raw?url=';
 
 export default function KainoaChat() {
   const [answers, setAnswers] = useState([]);
-  const [messages, setMessages] = useState([{ role: 'bot', text: "Aloha! I'm Kainoa. Ask about TEP citizenship — try 'apply' or toggle FORUM for live search." }]);
+  const [messages, setMessages] = useState([{ role: 'bot', text: "Aloha! I'm Kainoa. KAINOA is on by default — toggle FORUM for live forum search." }]);
   const [input, setInput] = useState('');
-  const [model, setModel] = useState('off');
-  const [useKainoa, setUseKainoa] = useState(true);
-  const [useForum, setUseForum] = useState(false);
-  const [useWeb, setUseWeb] = useState(false);
+
+  // DEFAULTS YOU ASKED FOR
+  const [model, setModel] = useState('off'); // AI: OFF
+  const [useKainoa, setUseKainoa] = useState(true); // KAINOA checked
+  const [useForum, setUseForum] = useState(false); // FORUM unchecked
+  const [useWeb, setUseWeb] = useState(false); // WEB unchecked
+
   const [aiOpen, setAiOpen] = useState(false);
   const msgsRef = useRef(null);
   const base = import.meta.env.BASE_URL;
 
   useEffect(() => {
     fetch(`${base}data/responses/index.json`)
-     .then(r => r.json())
-     .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
-     .then(a => setAnswers(a.flat()))
-     .catch(console.error);
+    .then(r => r.json())
+    .then(m => Promise.all(m.map(f => fetch(`${base}data/responses/${f}`).then(r => r.json()))))
+    .then(a => setAnswers(a.flat()))
+    .catch(console.error);
   }, [base]);
 
   useEffect(() => { msgsRef.current?.scrollTo({ top: 99999, behavior: 'smooth' }); }, [messages]);
@@ -43,79 +45,70 @@ export default function KainoaChat() {
 
   const searchForum = async (q) => {
     try {
-      const url = `${PROXY}${encodeURIComponent(`${FORUM}/search.json?q=${encodeURIComponent(q)}`)}`;
+      const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`${FORUM}/search.json?q=${encodeURIComponent(q)}&order=latest`)}`;
       const r = await fetch(url);
-      const data = await r.json();
-      return (data.topics || []).slice(0, 5).map(t => ({
+      const data = JSON.parse((await r.json()).contents);
+      return (data.topics || []).slice(0,5).map(t => ({
         title: t.title,
         url: `${FORUM}/t/${t.slug}/${t.id}`,
         excerpt: (t.excerpt || '').replace(/<[^>]*>/g, '')
       }));
-    } catch (e) { console.error(e); return []; }
+    } catch { return []; }
   };
 
-  const searchWeb = async (q) => { return []; }; // leave for later
+  const searchWeb = async (q) => { return []; };
 
   const send = async () => {
     const q = input.trim(); if (!q) return;
-    setInput('');
-    setMessages(m => [...m, { role: 'user', text: q }]);
+    setInput(''); setMessages(m => [...m, { role: 'user', text: q }]);
 
-    // 1. Kainoa manual
     if (useKainoa) {
       const hit = findKainoa(q);
-      if (hit) {
-        setMessages(m => [...m, { role: 'bot', text: hit.answer, source: 'KAINOA' }]);
-        return;
-      }
+      if (hit) { setMessages(m => [...m, { role: 'bot', text: hit.answer, source: 'KAINOA' }]); return; }
     }
-
-    // 2. Forum
     if (useForum) {
       setMessages(m => [...m, { role: 'bot', text: 'Searching forum...', source: 'FORUM' }]);
       const results = await searchForum(q);
-      setMessages(m => m.slice(0, -1)); // remove "searching"
+      setMessages(m => m.slice(0, -1));
       if (results.length) {
-        const html = results.map(r =>
-          `<div class="mb-3"><a href="${r.url}" target="_blank" class="text-sky-400 hover:underline">${r.title}</a><div class="text-xs text-slate-400 mt-1">${r.excerpt}</div></div>`
-        ).join('');
-        setMessages(m => [...m, { role: 'bot', text: html, source: 'FORUM' }]);
-        return;
+        const html = results.map(r => `<a href="${r.url}" target="_blank" style="color:#38bdf8">${r.title}</a><div style="color:#94a3b8;font-size:12px">${r.excerpt}</div>`).join('<br>');
+        setMessages(m => [...m, { role: 'bot', text: html, source: 'FORUM' }]); return;
       }
     }
+    if (useWeb) { /* web logic */ }
 
-    // 3. Web (placeholder)
-    if (useWeb) {
-      const web = await searchWeb(q);
-      if (web.length) { /* render */ return; }
-    }
-
-    setMessages(m => [...m, { role: 'bot', text: "No results. Try turning on FORUM.", source: 'KAINOA' }]);
+    setMessages(m => [...m, { role: 'bot', text: 'No results. Toggle FORUM on.', source: 'KAINOA' }]);
   };
 
   const models = [{id:'off',label:'AI: OFF'},{id:'phi',label:'AI: PHI-3.5'},{id:'llama',label:'AI: LLAMA 3.2'}];
-  const pill = "h-8 px-3 flex items-center gap-2 rounded-xl border text-[12px] select-none cursor-pointer";
+  const pill = "h-8 px-3 flex items-center gap-2 rounded-xl border text-[12px] cursor-pointer";
   const on = "border-slate-700 bg-[#1a1f2b] text-slate-200"; const off = "border-slate-800 bg-[#11151f] text-slate-400";
 
   return (
     <div style={{fontFamily:"'Lexend', sans-serif"}}>
       <div className="mb-4 flex items-center gap-2.5">
         <KLogo size={28}/>
-        {/*... your toggle buttons unchanged... */}
-        {[{k:'k',v:useKainoa,s:setUseKainoa,l:'KAINOA'},{k:'f',v:useForum,s:setUseForum,l:'FORUM'},{k:'w',v:useWeb,s:setUseWeb,l:'WEB'}].map(p=>(
-          <button key={p.k} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off}`} style={{fontFamily:"'Geom', sans-serif", fontWeight:800}}>
-            <span className={`w-4 h-4 rounded-[4px] border-2 flex items-center justify-center ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{p.v&&'✓'}</span>
+        <div className="relative">
+          <button onClick={()=>setAiOpen(o=>!o)} className={`${pill} ${model!=='off'?on:off} w-[120px] justify-between`} style={{fontFamily:"'Geom', sans-serif", fontWeight:800}}>
+            <span>{models.find(m=>m.id===model)?.label}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          {aiOpen&&<div className="absolute z-20 mt-1.5 w-[130px] rounded-xl border border-slate-800 bg-[#0c1018] py-1">{models.map(m=><button key={m.id} onClick={()=>{setModel(m.id);setAiOpen(false);}} className={`w-full text-left px-3 py-1.5 text-[12px] ${model===m.id?'text-white':'text-slate-400'}`} style={{fontWeight:800}}>{m.label}</button>)}</div>}
+        </div>
+        {[{v:useKainoa,s:setUseKainoa,l:'KAINOA'},{v:useForum,s:setUseForum,l:'FORUM'},{v:useWeb,s:setUseWeb,l:'WEB'}].map(p=>(
+          <button key={p.l} onClick={()=>p.s(!p.v)} className={`${pill} ${p.v?on:off}`} style={{fontFamily:"'Geom', sans-serif", fontWeight:800}}>
+            <span className={`w-4 h-4 rounded border-2 flex items-center justify-center ${p.v?'bg-sky-500 border-sky-500':'border-slate-600'}`}>{p.v&&'✓'}</span>
             {p.l}
           </button>
         ))}
       </div>
 
-      <div ref={msgsRef} className="mb-3 space-y-3 max-h-[55vh] overflow-y-auto pr-1">
+      <div ref={msgsRef} className="mb-3 space-y-3 max-h-[55vh] overflow-y-auto">
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
-            <div className="max-w-[92%] rounded-2xl border border-slate-800/80 bg-[#11151f] px-4 py-3 text-[14px] text-slate-200">
+            <div className="max-w-[92%] rounded-2xl border border-slate-800 bg-[#11151f] px-4 py-3 text-[14px] text-slate-200">
               {m.source&&<div className="mb-1 text-[10px] uppercase text-sky-400" style={{fontFamily:"'Geom', sans-serif",fontWeight:800}}>{m.source}</div>}
-              <div dangerouslySetInnerHTML={{__html:m.text.replace(/\n/g,'<br/>')}}/>
+              <div dangerouslySetInnerHTML={{__html:m.text}}/>
             </div>
           </div>
         ))}
@@ -123,7 +116,7 @@ export default function KainoaChat() {
 
       <div className="relative">
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask about TEP..." className="w-full h-[48px] rounded-2xl border border-slate-800 bg-[#11151f] pl-4 pr-24 text-white"/>
-        <button onClick={send} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-[36px] px-4 rounded-xl bg-sky-600 text-white" style={{fontFamily:"'Geom', sans-serif", fontWeight:800}}>SEND</button>
+        <button onClick={send} className="absolute right-1.5 top-1/2 -translate-y-1/2 h-[36px] px-4 rounded-xl bg-sky-600 text-white" style={{fontFamily:"'Geom', sans-serif", fontWeight:800, fontSize:'12px'}}>SEND</button>
       </div>
     </div>
   );
