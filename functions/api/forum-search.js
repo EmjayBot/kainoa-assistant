@@ -2,14 +2,12 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const q = url.searchParams.get('q') || '';
 
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      }
-    });
-  }
+  const keySet = !!context.env.DISCOURSE_API_KEY;
+  const userSet = !!context.env.DISCOURSE_API_USERNAME;
+  const username = context.env.DISCOURSE_API_USERNAME || 'NOT SET';
+
+  let discourseStatus = null;
+  let discourseBody = null;
 
   try {
     const res = await fetch(
@@ -22,19 +20,21 @@ export async function onRequest(context) {
         }
       }
     );
-
-    const data = await res.json();
-
-    return new Response(JSON.stringify(data), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      }
-    });
+    discourseStatus = res.status;
+    discourseBody = await res.text();
   } catch (err) {
-    return new Response(JSON.stringify({ posts: [], topics: [], error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    discourseBody = err.message;
   }
+
+  const debug = `
+KEY SET: ${keySet}
+USER SET: ${userSet}
+USERNAME: ${username}
+DISCOURSE STATUS: ${discourseStatus}
+DISCOURSE BODY: ${discourseBody}
+  `.trim();
+
+  return new Response(debug, {
+    headers: { 'Content-Type': 'text/plain' }
+  });
 }
