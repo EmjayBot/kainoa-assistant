@@ -1,9 +1,7 @@
 export async function onRequest(context) {
   const { request, env } = context;
-  const url = new URL(request.url);
-  const q = url.searchParams.get('q') || 'test';
-
-  const discourseUrl = `https://forum.thenorthpacific.org/search.json?q=${encodeURIComponent(q)}`;
+  const q = new URL(request.url).searchParams.get('q') || 'test';
+  const url = `https://forum.theeastpacific.com/search.json?q=${encodeURIComponent(q)}`;
 
   const headers = {
     'Api-Key': env.DISCOURSE_API_KEY,
@@ -11,30 +9,16 @@ export async function onRequest(context) {
     'User-Agent': 'KainoaBot/1.0'
   };
 
-  let status = 0, body = '';
-  try {
-    const r = await fetch(discourseUrl, { headers });
-    status = r.status;
-    body = await r.text();
-  } catch (e) {
-    status = 500;
-    body = e.message;
-  }
+  const r = await fetch(url, { headers });
+  const body = await r.text();
 
-  const debug = {
+  console.log(JSON.stringify({
+    forum: 'TEP',
     query: q,
-    discourse_status: status,
+    status: r.status,
     key_present: !!env.DISCOURSE_API_KEY,
-    user_used: headers['Api-Username'],
-    body_first_400_chars: body.slice(0, 400)
-  };
+    body_start: body.slice(0,200)
+  }));
 
-  const html = `<pre>${JSON.stringify(debug, null, 2)}</pre>`;
-
-  return new Response(html, {
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Access-Control-Allow-Origin': '*'
-    }
-  });
+  return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
 }
