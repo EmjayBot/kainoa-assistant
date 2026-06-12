@@ -11,26 +11,29 @@ export async function onRequest(context) {
     'User-Agent': 'KainoaBot/1.0'
   };
 
-  let resp, text, status;
+  let status = 0, body = '';
   try {
-    resp = await fetch(discourseUrl, { headers });
-    status = resp.status;
-    text = await resp.text();
+    const r = await fetch(discourseUrl, { headers });
+    status = r.status;
+    body = await r.text();
   } catch (e) {
     status = 500;
-    text = e.message;
+    body = e.message;
   }
 
-  return new Response(JSON.stringify({
+  const debug = {
     query: q,
     discourse_status: status,
-    discourse_url: discourseUrl,
     key_present: !!env.DISCOURSE_API_KEY,
     user_used: headers['Api-Username'],
-    body_preview: text.slice(0, 500)
-  }, null, 2), {
+    body_first_400_chars: body.slice(0, 400)
+  };
+
+  const html = `<pre>${JSON.stringify(debug, null, 2)}</pre>`;
+
+  return new Response(html, {
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'text/html; charset=utf-8',
       'Access-Control-Allow-Origin': '*'
     }
   });
