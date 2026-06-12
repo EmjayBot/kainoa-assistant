@@ -1,40 +1,37 @@
 export async function onRequest(context) {
-  const url = new URL(context.request.url);
-  const q = url.searchParams.get('q') || '';
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const q = url.searchParams.get('q') || 'test';
 
-  const keySet = !!context.env.DISCOURSE_API_KEY;
-  const userSet = !!context.env.DISCOURSE_API_USERNAME;
-  const username = context.env.DISCOURSE_API_USERNAME || 'NOT SET';
+  const discourseUrl = `https://forum.thenorthpacific.org/search.json?q=${encodeURIComponent(q)}`;
 
-  let discourseStatus = null;
-  let discourseBody = null;
+  const headers = {
+    'Api-Key': env.DISCOURSE_API_KEY,
+    'Api-Username': env.DISCOURSE_API_USER || 'Kainoa-search',
+    'User-Agent': 'KainoaBot/1.0'
+  };
 
+  let resp, text, status;
   try {
-    const res = await fetch(
-      `https://forum.theeastpacific.com/search.json?q=${encodeURIComponent(q)}&include_blurbs=true`,
-      {
-        headers: {
-          'Api-Key': context.env.DISCOURSE_API_KEY,
-          'Api-Username': context.env.DISCOURSE_API_USERNAME,
-          'Accept': 'application/json',
-        }
-      }
-    );
-    discourseStatus = res.status;
-    discourseBody = await res.text();
-  } catch (err) {
-    discourseBody = err.message;
+    resp = await fetch(discourseUrl, { headers });
+    status = resp.status;
+    text = await resp.text();
+  } catch (e) {
+    status = 500;
+    text = e.message;
   }
 
-  const debug = `
-KEY SET: ${keySet}
-USER SET: ${userSet}
-USERNAME: ${username}
-DISCOURSE STATUS: ${discourseStatus}
-DISCOURSE BODY: ${discourseBody}
-  `.trim();
-
-  return new Response(debug, {
-    headers: { 'Content-Type': 'text/plain' }
+  return new Response(JSON.stringify({
+    query: q,
+    discourse_status: status,
+    discourse_url: discourseUrl,
+    key_present: !!env.DISCOURSE_API_KEY,
+    user_used: headers['Api-Username'],
+    body_preview: text.slice(0, 500)
+  }, null, 2), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
   });
 }
