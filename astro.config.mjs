@@ -2,13 +2,9 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
-import cloudflare from '@astrojs/cloudflare';
-
 export default defineConfig({
   site: 'https://kainoa.emjay.fyi',
   base: '/',
-  output: 'static',
-  adapter: cloudflare(),
   integrations: [
     react(),
     starlight({
