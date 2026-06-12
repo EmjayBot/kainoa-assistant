@@ -31,15 +31,25 @@ export default function KainoaChat() {
       if (ql === kl) s = 100; else if (ql.includes(kl)) s = 80; else if (kl.includes(ql)) s = 60;
       if (s > score) { score = s; best = a; }
     }
-    return score > 20? best : null;
+    return score > 20 ? best : null;
   };
 
-  // Calls your own server - no CSP/CORS issues
+  // Calls your Worker — maps Discourse posts[] to the UI shape
   const searchForum = async (q) => {
     try {
       const res = await fetch(`/api/forum-search?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      return data.topics || [];
+
+      const topicsById = new Map((data.topics || []).map(t => [t.id, t]));
+
+      return (data.posts || []).slice(0, 10).map(p => {
+        const t = topicsById.get(p.topic_id) || {};
+        const title = t.title || `Topic ${p.topic_id}`;
+        // ID-only URL works even when Magisterium categories are gated
+        const url = `https://forum.theeastpacific.com/t/${p.topic_id}/${p.post_number || 1}`;
+        const excerpt = (p.blurb || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
+        return { title, url, excerpt };
+      });
     } catch {
       return [];
     }
@@ -69,7 +79,7 @@ export default function KainoaChat() {
       }
       const html = results.map(r => `
         <div style="margin-bottom:16px">
-          <a href="${r.url}" target="_blank" style="color:#38bdf8;text-decoration:none;font-weight:500">${r.title}</a>
+          <a href="${r.url}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:none;font-weight:500">${r.title}</a>
           <div style="color:#94a3b8;font-size:13px;margin-top:6px;line-height:1.5">${r.excerpt}</div>
         </div>
       `).join('');
@@ -109,7 +119,7 @@ export default function KainoaChat() {
         {messages.map((m,i)=>(
           <div key={i} className={`flex ${m.role==='user'?'justify-end':''}`}>
             <div className={`max-w-[88%] rounded-2xl border px-5 py-4 ${m.role==='user'?'bg-[#1a2333] border-slate-700':'bg-[#11151f] border-slate-800'}`}>
-              {m.source&&<div className="mb-2 text- uppercase tracking-wider text-slate-500">{m.source}</div>}
+              {m.source&&<div className="mb-2 text-xs uppercase tracking-wider text-slate-500">{m.source}</div>}
               <div className="text-slate-200 leading-relaxed" dangerouslySetInnerHTML={{__html:m.text}}/>
             </div>
           </div>
